@@ -1,0 +1,18 @@
+## Parameters for EMILI PFSP_TCT mono-objective tuning
+##
+## ./emili <instance> PFSP_TCT <pivot> <init> <term> <neigh>
+##
+## We tune:
+##  - pivot  : best / first
+##  - init   : neh / rand
+##  - neigh  : insert / exchange / transpose
+##  - term   : fixed to locmin (kept as a parameter to preserve position)
+
+# 1:     2:        3:   4:
+pivot    ""        c    (best, first)
+init     ""        c    (neh, rand)
+term     ""        c    (locmin)
+neigh    ""        c    (insert, exchange, transpose)
+
+[global]
+digits = 4

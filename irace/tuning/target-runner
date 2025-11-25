@@ -1,0 +1,88 @@
+#!/bin/bash
+###############################################################################
+# This script is the command that is executed every run.
+# This script is run in the execution directory (execDir, --exec-dir).
+#
+# PARAMETERS:
+# $1 is the candidate configuration number
+# $2 is the instance ID
+# $3 is the seed
+# $4 is the instance name
+# The rest ($* after `shift 4') are parameters to the run
+#
+# RETURN VALUE:
+# This script should print one numerical value: the cost that must be minimized.
+# Exit with 0 if no error, with 1 in case of error
+###############################################################################
+
+error() {
+    echo "`TZ=UTC date`: $0: error: $@"
+    exit 1
+}
+
+# This parses the arguments given by irace. Do not touch it!
+CONFIG_ID=$1
+INSTANCE_ID=$2
+SEED=$3
+INSTANCE=$4
+shift 4 || error "Not enough parameters"
+CONFIG_PARAMS=$*
+# End of parsing
+
+# EDIT THIS: Path to your executable
+# (ici on suppose que 'emili' est dans execDir ou accessible via chemin relatif)
+EXE="../../math/Implementation/build/emili"
+
+# EDIT THIS: Specify how parameters are given to your executable
+# Pour EMILI, on veut: ./emili <instance> PFSP_TCT <pivot> <init> <term> <neigh>
+# où <pivot> <init> <term> <neigh> sont contenus dans ${CONFIG_PARAMS}
+EXE_PARAMS="${INSTANCE} PFSP_TCT ${CONFIG_PARAMS}"
+
+if [ ! -x "${EXE}" ]; then
+    # Si EXE n’est pas trouvable localement, essayer via PATH (optionnel)
+    if ! command -v ${EXE} >/dev/null 2>&1; then
+        error "${EXE}: not found or not executable (pwd: $(pwd))"
+    fi
+fi
+
+# These files are saved in execDir. Saving them in /tmp may be faster.
+STDOUT=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stdout
+STDERR=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
+
+# Pour debug, tu peux décommenter :
+# echo "$EXE ${EXE_PARAMS} 1> ${STDOUT} 2> ${STDERR}" >&2
+
+# Lancer EMILI. Si tu veux ignorer certains signaux, tu peux mettre {} autour.
+$EXE ${EXE_PARAMS} 1> ${STDOUT} 2> ${STDERR}
+STATUS=$?
+
+if [ ${STATUS} -ne 0 ]; then
+    # Programme crash → renvoyer un coût énorme
+    echo "1000000000000"
+    # Commenter la ligne suivante si tu veux garder les logs en cas de crash
+    # rm -f "${STDOUT}" "${STDERR}"
+    exit 0
+fi
+
+if [ ! -s "${STDOUT}" ]; then
+    error "${STDOUT}: No such file or directory"
+fi
+
+# On sait qu’EMILI produit une ligne avec juste le nombre du coût (ex: 137258.000000).
+# On récupère la dernière ligne qui est "seulement" un nombre (éventuellement avec espaces).
+COST=$(grep -E '^[[:space:]]*[0-9]+(\.[0-9]+)?[[:space:]]*$' "${STDOUT}" | tail -n 1 | tr -d '[:space:]')
+
+# Garde-fou : vérifier que c’est bien un nombre
+if ! echo "${COST}" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; then
+    echo "`TZ=UTC date`: $0: warning: COST not numeric, got '${COST}', returning huge cost" >&2
+    echo "1000000000000"
+    # Commenter si tu veux garder les fichiers
+    rm -f "${STDOUT}" "${STDERR}"
+    exit 0
+fi
+
+echo "${COST}"
+
+# Comment the following line if you wish to preserve temporary files (e.g., for debugging)
+rm -f "${STDOUT}" "${STDERR}"
+exit 0
