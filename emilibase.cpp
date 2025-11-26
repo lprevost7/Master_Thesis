@@ -1971,7 +1971,8 @@ emili::GeneticAlgorithm::GeneticAlgorithm(InitialSolution& initial,
                                           GAMutation& mut,
                                           int popSize,
                                           float crossover_rate,
-                                          float mutation_rate)
+                                          float mutation_rate,
+                                          emili::LocalSearch* improver)
     : emili::LocalSearch(),
       selection(sel),
       crossover(cross),
@@ -1984,6 +1985,8 @@ emili::GeneticAlgorithm::GeneticAlgorithm(InitialSolution& initial,
     this->termcriterion = &termination;
     this->neighbh = new emili::EmptyNeighBorHood();
     this->bestSoFar = initial.generateEmptySolution();
+    this->improver = improver;
+
 }
 
 emili::GeneticAlgorithm::~GeneticAlgorithm()
@@ -1993,6 +1996,8 @@ emili::GeneticAlgorithm::~GeneticAlgorithm()
     delete &selection;
     delete &crossover;
     delete &mutation;
+
+    improver = nullptr ;
 }
 
 emili::Solution* emili::GeneticAlgorithm::search()
@@ -2057,6 +2062,24 @@ emili::Solution* emili::GeneticAlgorithm::search()
             {
                 // Mutación (definida en una clase específica de VRP)
                 mutation.mutate(*child);
+            }
+
+            // ======================
+            // MEMETIC PART (LOCAL SEARCH)
+            // ======================
+
+            if (improver != nullptr)
+            {
+                emili::Solution* improved = improver->search(child);
+                if (improved && *improved < *child)
+                {
+                    delete child;
+                    child = improved;
+                }
+                else
+                {
+                    delete improved;
+                }
             }
 
             offspring.push_back(child);

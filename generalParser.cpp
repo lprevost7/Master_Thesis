@@ -20,7 +20,7 @@
 #define PRINT_SOLUTION "ps"
 #define DEFAULT_IT 0
 #define DEFAULT_TPLSSTEP 100
-#define GIT_COMMIT_NUMBER "b8cf289c5c2dd2faa066c6e8c33abaa963962f1c"
+#define GIT_COMMIT_NUMBER "b1a73c612192ffe185d60db8bee695d906e7d243"
 /*Base Initials*/
 #define COMPOSED_INITIAL "cinit"
 /*Base Algos */
@@ -44,6 +44,7 @@
 
 //#define Genetic algo "GA"
 #define ALG_GA "ga"
+#define MEMETIC "memetic"
 
 /*Base Termination criteria*/
 #define TERMINATION_MAXSTEPS "maxstep"
@@ -920,6 +921,17 @@ emili::LocalSearch* prs::EmBaseBuilder::buildAlgo()
         oss.str(""); oss << "mutation rate = " << mr;
         printTabPlusOne(oss.str().c_str());
 
+        bool useMemetic = false;
+        if (tm.checkToken(MEMETIC))   // "memetic"
+        {
+            useMemetic = true;
+            printTabPlusOne("Memetic local search: ENABLED (full LS on each child)");
+        }
+        else
+        {
+            printTabPlusOne("Memetic local search: DISABLED (pure GA)");
+        }
+
         emili::InitialSolution* in  = retrieveComponent(COMPONENT_INITIAL_SOLUTION_GENERATOR).get<emili::InitialSolution>();
         emili::Termination*     te  = retrieveComponent(COMPONENT_TERMINATION_CRITERION).get<emili::Termination>();
 
@@ -927,8 +939,22 @@ emili::LocalSearch* prs::EmBaseBuilder::buildAlgo()
         emili::GACrossover* gaCross = retrieveComponent(COMPONENT_GA_CROSSOVER).get<emili::GACrossover>();
         emili::GAMutation*  gaMut   = retrieveComponent(COMPONENT_GA_MUTATION).get<emili::GAMutation>();
 
+        // =========================================================
+        // MEMETIC PART : adding Local Search to the GA
+        // =========================================================
+
+        // Check if the MEMETIC option is set
+        emili::LocalSearch* improver = nullptr;
+        if(useMemetic)
+        {
+        emili::Neighborhood* ne = retrieveComponent(COMPONENT_NEIGHBORHOOD).get<emili::Neighborhood>();
+        emili::Termination*  lsTerm = new emili::LocalMinimaTermination();
+        improver = new emili::BestImprovementSearch(*in, *lsTerm, *ne);
+        }
+
+        
         ls = new emili::GeneticAlgorithm(*in, *te, *gaSel, *gaCross, *gaMut,
-                                         popSize, cr, mr);
+                                         popSize, cr, mr, improver);
     }
 
     prs::decrementTabLevel();

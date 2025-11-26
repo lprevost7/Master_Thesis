@@ -449,7 +449,20 @@ void executeMultiObjective(emili::LocalSearch* ls, float pls, clock_t startTime,
         MO_LOG("Running TPPLS...");
     }
 
-    numOfLoop = (is_tpls || is_tppls) ? (ls->getTPLSStep() + 1) : 2;
+    // Detect if ls is a GeneticAlgorithm.
+    bool isGA = (dynamic_cast<emili::GeneticAlgorithm*>(ls) != nullptr);
+
+    if (is_tpls || is_tppls || isGA)
+    {
+        numOfLoop = ls->getTPLSStep() + 1;
+    }
+    else
+    {
+        numOfLoop = (is_tpls || is_tppls) ? (ls->getTPLSStep() + 1) : 2;
+
+    }
+
+
     // Use global time budget for the whole program; do not start per-step timers.
     tplsPhase(ls, startTime, searchTimeLimit, numOfLoop, solVector);
     MO_LOG("Number of solutions before PLS: " << solVector.size());

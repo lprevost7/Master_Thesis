@@ -1,0 +1,187 @@
+Algorithm,Parameter,ParamType,Token/Options,LogicalInterval/Notes
+ch6,initial_solution,word,INITIAL_*,See INITIAL_* tokens section below
+ch6,termination,word,TERMINATION_*,See TERMINATION_* section below
+ch6,neighborhood1,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* section below
+ch6,neighborhood2,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* section below
+ris,initial_solution,word,INITIAL_*,See INITIAL_* tokens
+ris,termination,word,TERMINATION_*,See TERMINATION_* tokens
+ris,neighborhood,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* tokens
+tabu,mode,word,first|best,Choice of tabu update rule
+tabu,initial_solution,word,INITIAL_*,See INITIAL_* tokens
+tabu,termination,word,TERMINATION_*,See TERMINATION_* tokens
+tabu,neighborhood,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* tokens
+tabu,tabu_memory,word,TABU_MEMORY_*,See TABU_MEMORY_* section below
+vnd,mode,word,first|best,Tie-breaking strategy
+vnd,initial_solution,word,INITIAL_*,See INITIAL_* tokens
+vnd,termination,word,TERMINATION_*,See TERMINATION_* tokens
+vnd,neighborhoods,word,NEIGHBORHOOD_* (2+),Ordered list of 2 or more neighborhoods
+gvns,initial_solution,word,INITIAL_*,See INITIAL_* tokens
+gvns,perturbation1,word,PERTURBATION_*,See PERTURBATION_* section
+gvns,perturbation2,word,PERTURBATION_*,See PERTURBATION_* section
+gvns,-it,number,seconds,float>0
+ils,local_search,word,LOCAL_SEARCH_SPEC,Full local-search specification (e.g., "first <initial> <term> <neigh>")
+ils,termination,word,TERMINATION_*,See TERMINATION_* tokens
+ils,perturbation,word,PERTURBATION_*,See PERTURBATION_* tokens
+ils,acceptance,word,ACCEPTANCE_*,See ACCEPTANCE_* section
+ils,-it,number,seconds,float>0
+ga,popSize,number,integer,popSize,[2,∞) (practical upper bound depends on memory/time)
+ga,crossoverRate,number,float,crossoverRate,[0.0,1.0]
+ga,mutationRate,number,float,mutationRate,[0.0,1.0]
+ga,initial_solution,word,INITIAL_*,See INITIAL_* tokens
+ga,termination,word,TERMINATION_*,See TERMINATION_* tokens
+ga,selection,word,ga_tournament,Only `ga_tournament` implemented in PFSP builder
+ga,selection.k,number,integer,k,[1,popSize] (practical) or [1,nj]
+ga,crossover,word,ga_ox,Order Crossover (OX)
+ga,mutation,word,ga_swapmut,Swap mutation
+pipe,components,word,LOCAL_SEARCH or other algos,Composed/piped algos take other algorithm specs as parameters
+
+# TERMINATION tokens
+TERMINATION,true,word,true,No-stop termination (no parameter)
+TERMINATION,time,number,time,<float> (seconds),float>0
+TERMINATION,locmin,word,locmin,Stops on local minima (no parameter)
+TERMINATION,soater,number,soater,float>0 (temperature-like; check builder for exact semantics)
+TERMINATION,iteration,number,iteration,<int> >= 1
+TERMINATION,maxstep,number,maxstep,<int> >= 1
+TERMINATION,msnoimprov,number,msnoimprov,<int> >= 0
+TERMINATION,karter,number,karter,Usually integer (check builder for exact semantics)
+
+# INITIAL_SOLUTION tokens (each is a word token unless noted)
+INITIAL,random,word,random,Random constructive
+INITIAL,irandom,word,irandom,Iterated random (has integer param in builder) 
+INITIAL,slack,word,slack,
+INITIAL,lit,word,lit,
+INITIAL,rz,word,rz,
+INITIAL,nrz,word,nrz,
+INITIAL,nrz2,word,nrz2,
+INITIAL,nrz2ff,word,nrz2ff,
+INITIAL,srz,word,srz,
+INITIAL,lr,number,lr size,int in [1,nj]
+INITIAL,lrnm,word,lrnm,
+INITIAL,nlr,number,nlr size,int in [1,nj]
+INITIAL,mneh,word,mneh,
+INITIAL,rmneh,word,rmneh,
+INITIAL,nwslack,word,nwslack,
+INITIAL,frb5,word,frb5,
+INITIAL,csfrb5,word,csfrb5,
+INITIAL,gfrb5,word,gfrb5,
+INITIAL,bs,word,bs,
+INITIAL,bs2,word,bs2,
+INITIAL,bs2n,word,bs2n,
+INITIAL,bsnn,word,bsnn,
+INITIAL,bs2nf,word,bs2nf,
+INITIAL,ff,word,ff,
+INITIAL,ffn,word,ffn,
+INITIAL,bscho,word,bscho,
+INITIAL,bschr,word,bschr,
+INITIAL,bsch,word,bsch,
+
+# NEIGHBORHOOD tokens (each is a word token)
+NEIGHBORHOOD,insert,word,insert,
+NEIGHBORHOOD,binsert,word,binsert,Back-insert
+NEIGHBORHOOD,finsert,word,finsert,Forward-insert
+NEIGHBORHOOD,tinsert,word,tinsert,Two-insert
+NEIGHBORHOOD,transpose,word,transpose,
+NEIGHBORHOOD,xtranspose,word,xtranspose,Extended transpose
+NEIGHBORHOOD,exchange,word,exchange,Swap/exchange
+NEIGHBORHOOD,adpinsert,word,adpinsert,Adaptive insert
+NEIGHBORHOOD,karnghb,word,karnghb,Karnighb
+NEIGHBORHOOD,csinsert,word,csinsert,Custom insert
+NEIGHBORHOOD,atxexchange,word,atxexchange,Objective-weighted exchange
+NEIGHBORHOOD,hatxexchange,word,hatxexchange,
+NEIGHBORHOOD,eatxexchange,word,eatxexchange,
+NEIGHBORHOOD,oexchange,word,oexchange,Optimized exchange
+NEIGHBORHOOD,txinsert,word,txinsert,
+NEIGHBORHOOD,atxinsert,word,atxinsert,
+NEIGHBORHOOD,oinsert,word,oinsert,
+NEIGHBORHOOD,hataxinsert,word,hatxinsert,
+NEIGHBORHOOD,natxinsert,word,natxinsert,
+NEIGHBORHOOD,natx2insert,word,natx2insert,
+NEIGHBORHOOD,thatxinsert,word,thatxinsert,
+NEIGHBORHOOD,fatxinsert,word,fatxinsert,
+NEIGHBORHOOD,patxinsert,word,patxinsert,
+NEIGHBORHOOD,satxinsert,word,satxinsert,
+NEIGHBORHOOD,eatxinsert,word,eatxinsert,
+NEIGHBORHOOD,tatxinsert,word,tatxinsert,
+NEIGHBORHOOD,ntctinsert,word,ntctinsert,Total completion time-specific
+NEIGHBORHOOD,nrztctinsert,word,nrztctinsert,
+NEIGHBORHOOD,nttinsert,word,nttinsert,Total tardiness-specific
+NEIGHBORHOOD,tainsert,word,tainsert,Makespan-related
+NEIGHBORHOOD,fstainsert,word,fstainsert,
+NEIGHBORHOOD,cstainsert,word,cstainsert,
+NEIGHBORHOOD,ntainsert,word,ntainsert,No-idle makespan
+NEIGHBORHOOD,nwinsert,word,nwinsert,No-wait insert
+NEIGHBORHOOD,nwtinsert,word,nwtinsert,No-wait two-insert
+NEIGHBORHOOD,nwexchange,word,nwexchange,No-wait exchange
+NEIGHBORHOOD,nwtranspose,word,nwtranspose,No-wait transpose
+NEIGHBORHOOD,sdsttainsert,word,sdsttainsert,Seq-dep setup times
+NEIGHBORHOOD,sdstcsinsert,word,sdstcsinsert,
+
+# PERTURBATION tokens
+PERTURBATION,igper,number,igper n,int in [1,nj-1] (builder clamps to <= nj-1)
+PERTURBATION,testper,word,testper,
+PERTURBATION,rndmv,composite,rndmv NEIGHBORHOOD #moves,int moves in [1,nj]
+PERTURBATION,noper,number,noper int,>=1
+PERTURBATION,nrzper,number,nrzper int,>=1
+PERTURBATION,tmiigper,number,tmiigper int,>=1
+PERTURBATION,nwtmiigper,number,nwtmiigper int,>=1
+PERTURBATION,igls,composite,igls (int) LOCAL_SEARCH,int >=1
+PERTURBATION,rsls,composite,rsls (int) LOCAL_SEARCH,int >=1
+PERTURBATION,mptlm,word,mptlm,
+PERTURBATION,restart,word,restart,
+PERTURBATION,restartls,word,restartls,
+PERTURBATION,sdstigo,word,sdstigo,SDST-specific perturbation
+PERTURBATION,sdstigols,word,sdstigols,SDST-specific
+
+# ACCEPTANCE tokens
+ACCEPTANCE,soaacc,number,soaacc float,float>0 (temperature-like)
+ACCEPTANCE,testacc,number,testacc #swaps,int >=0
+ACCEPTANCE,metropolis,composite,metropolis start_temp(float),start_temp>0
+ACCEPTANCE,always,word,always intensify|diversify,Choice intensify or diversify
+ACCEPTANCE,improve,word,improve,No params
+ACCEPTANCE,sa_metropolis,composite,sa_metropolis start_temp end_temp ratio,temps>0 ratio in (0,1]
+ACCEPTANCE,pmetro,composite,pmetro start_temp end_temp ratio frequence(int),see builder
+ACCEPTANCE,saacc,composite,saacc start_temp end_temp ratio frequence(int),see builder
+ACCEPTANCE,tmiigacc,number,tmiigacc float,float>0
+ACCEPTANCE,implat,composite,implat num_non_improv plateau_threshold,integers/floats >=0
+
+# TABU_MEMORY tokens
+TABU_MEMORY,move,number,move size,int >=1 (practical <= nj or higher)
+TABU_MEMORY,move2,number,move2 size,int >=1
+TABU_MEMORY,hash,number,hash size,int >=1
+TABU_MEMORY,solution,number,solution size,int >=1
+TABU_MEMORY,tsabm,number,tsabm size,int >=1
+TABU_MEMORY,tsabmt,number,tsabmt size,int >=1
+TABU_MEMORY,value,word,value,Value-based memory
+
+# GA-specific tokens (repeat for clarity)
+GA,ga_tournament,word,ga_tournament k,tournament with parameter k (integer) k in [1,popSize] or [1,nj]
+GA,ga_ox,word,ga_ox,Order Crossover (no numeric param)
+GA,ga_swapmut,word,ga_swapmut,Swap mutation (no numeric param)
+
+# CLI flags
+FLAG,-it,number,seconds,float>0 (alternate termination/time limit)
+FLAG,-step,number,step,int >=1 (logging/step size)
+FLAG,-rnds,number,seed,int (any 32-bit seed)
+
+# Notes
+NOTE, nj,number,nj,Number of jobs in the instance (use in param bounds)
+
+# PARSING_NOTES
+# Token,ExpectedType,ExampleParserError
+PARSING,tatxinsert,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
+PARSING,time,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
+PARSING,soater,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
+PARSING,soaacc,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
+PARSING,-it,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
+PARSING,iteration,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+PARSING,maxstep,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+PARSING,msnoimprov,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+PARSING,igper,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+PARSING,lr,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+PARSING,nlr,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+PARSING,rndmv_moves,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+PARSING,testacc_swaps,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+PARSING,-step,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+
+# Notes: The parser messages above are examples matching the code's parsing expectations (decimal vs integer). Replace token names above with the exact CLI token when invoking the parser.
+

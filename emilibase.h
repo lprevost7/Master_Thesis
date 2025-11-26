@@ -1575,6 +1575,9 @@ protected:
     float crossoverRate;
     float mutationRate;
 
+    // variable to use memetic algorithms
+    emili::LocalSearch* improver;
+
     std::vector<emili::Solution*> population;
 
     void initializePopulation();
@@ -1588,7 +1591,8 @@ public:
                      GAMutation& mut,
                      int popSize,
                      float crossover_rate,
-                     float mutation_rate);
+                     float mutation_rate,
+                     emili::LocalSearch* improver);
 
     virtual ~GeneticAlgorithm();
 
