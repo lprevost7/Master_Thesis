@@ -11,6 +11,9 @@
 #include <sstream>
 #include <algorithm>
 
+// Global flag defined in pfsp/pfspBuilder.cpp
+extern bool is_ga;
+
 /* modifiers */
 #define RO "-ro"
 #define IT "-it"
@@ -20,7 +23,7 @@
 #define PRINT_SOLUTION "ps"
 #define DEFAULT_IT 0
 #define DEFAULT_TPLSSTEP 100
-#define GIT_COMMIT_NUMBER "b1a73c612192ffe185d60db8bee695d906e7d243"
+#define GIT_COMMIT_NUMBER "f40f8fbd244a021c54b167b5218ddf69b4178603"
 /*Base Initials*/
 #define COMPOSED_INITIAL "cinit"
 /*Base Algos */
@@ -907,6 +910,8 @@ emili::LocalSearch* prs::EmBaseBuilder::buildAlgo()
 
     else if(tm.checkToken(ALG_GA))
     {
+        // Set the global GA flag (explicit global scope to avoid prs:: lookup)
+        ::is_ga = true;
         printTab("GENETIC ALGORITHM");
 
         int    popSize = tm.getInteger();   // populationSize

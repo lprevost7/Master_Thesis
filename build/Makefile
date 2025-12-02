@@ -251,6 +251,30 @@ multiobjective.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/emili.dir/build.make CMakeFiles/emili.dir/multiobjective.cpp.s
 .PHONY : multiobjective.cpp.s
 
+pfsp/moead_ga_wrapper.o: pfsp/moead_ga_wrapper.cpp.o
+.PHONY : pfsp/moead_ga_wrapper.o
+
+# target to build an object file
+pfsp/moead_ga_wrapper.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/emili.dir/build.make CMakeFiles/emili.dir/pfsp/moead_ga_wrapper.cpp.o
+.PHONY : pfsp/moead_ga_wrapper.cpp.o
+
+pfsp/moead_ga_wrapper.i: pfsp/moead_ga_wrapper.cpp.i
+.PHONY : pfsp/moead_ga_wrapper.i
+
+# target to preprocess a source file
+pfsp/moead_ga_wrapper.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/emili.dir/build.make CMakeFiles/emili.dir/pfsp/moead_ga_wrapper.cpp.i
+.PHONY : pfsp/moead_ga_wrapper.cpp.i
+
+pfsp/moead_ga_wrapper.s: pfsp/moead_ga_wrapper.cpp.s
+.PHONY : pfsp/moead_ga_wrapper.s
+
+# target to generate assembly for a file
+pfsp/moead_ga_wrapper.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/emili.dir/build.make CMakeFiles/emili.dir/pfsp/moead_ga_wrapper.cpp.s
+.PHONY : pfsp/moead_ga_wrapper.cpp.s
+
 pfsp/paramsparser.o: pfsp/paramsparser.cpp.o
 .PHONY : pfsp/paramsparser.o
 
@@ -371,6 +395,30 @@ pfsp/pfspinstance.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/emili.dir/build.make CMakeFiles/emili.dir/pfsp/pfspinstance.cpp.s
 .PHONY : pfsp/pfspinstance.cpp.s
 
+psfsp_moead.o: psfsp_moead.cpp.o
+.PHONY : psfsp_moead.o
+
+# target to build an object file
+psfsp_moead.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/emili.dir/build.make CMakeFiles/emili.dir/psfsp_moead.cpp.o
+.PHONY : psfsp_moead.cpp.o
+
+psfsp_moead.i: psfsp_moead.cpp.i
+.PHONY : psfsp_moead.i
+
+# target to preprocess a source file
+psfsp_moead.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/emili.dir/build.make CMakeFiles/emili.dir/psfsp_moead.cpp.i
+.PHONY : psfsp_moead.cpp.i
+
+psfsp_moead.s: psfsp_moead.cpp.s
+.PHONY : psfsp_moead.s
+
+# target to generate assembly for a file
+psfsp_moead.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/emili.dir/build.make CMakeFiles/emili.dir/psfsp_moead.cpp.s
+.PHONY : psfsp_moead.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -394,6 +442,9 @@ help:
 	@echo "... multiobjective.o"
 	@echo "... multiobjective.i"
 	@echo "... multiobjective.s"
+	@echo "... pfsp/moead_ga_wrapper.o"
+	@echo "... pfsp/moead_ga_wrapper.i"
+	@echo "... pfsp/moead_ga_wrapper.s"
 	@echo "... pfsp/paramsparser.o"
 	@echo "... pfsp/paramsparser.i"
 	@echo "... pfsp/paramsparser.s"
@@ -409,6 +460,9 @@ help:
 	@echo "... pfsp/pfspinstance.o"
 	@echo "... pfsp/pfspinstance.i"
 	@echo "... pfsp/pfspinstance.s"
+	@echo "... psfsp_moead.o"
+	@echo "... psfsp_moead.i"
+	@echo "... psfsp_moead.s"
 .PHONY : help
 
 

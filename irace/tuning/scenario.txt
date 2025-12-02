@@ -250,15 +250,3 @@
 
 ## END of scenario file
 ############################################################################
-
-
-parameterFile = parameters.txt
-targetRunner  = ./target-runner
-
-trainInstancesDir = ./instances
-# ou trainInstancesFile = instances.txt
-
-execDir = ./arena
-logFile = irace.Rdata
-maxExperiments = 200
-seed = 1234

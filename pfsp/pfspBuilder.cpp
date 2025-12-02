@@ -248,6 +248,7 @@ emili::pfsp::PermutationFlowShop* loadProblem(char* t, PfspInstance i);
 bool is_tpls = false;
 bool is_pls = false;
 bool is_tppls = false;
+bool is_ga = false;
 
 std::string info_pfsp()
 {

@@ -1594,6 +1594,16 @@ public:
                      float mutation_rate,
                      emili::LocalSearch* improver);
 
+    emili::InitialSolution& getInitialSolutionRef() { return *init; }
+    GASelection& getSelection() { return selection; }
+    GACrossover& getCrossover() { return crossover; }
+    GAMutation&  getMutation()  { return mutation; }
+    emili::LocalSearch* getImprover() { return improver; }
+
+    int   getPopulationSize()   const { return populationSize; }
+    float getCrossoverRate()    const { return crossoverRate; }
+    float getMutationRate()     const { return mutationRate; }
+
     virtual ~GeneticAlgorithm();
 
     // Versión sin parámetro: usa InitialSolution para todo

@@ -11,12 +11,10 @@
 #include <cstring>
 #include <algorithm>
 #include "generalParser.h"
-//#define MAIN_NEW
 #include "pfsp/pfspBuilder.h"
-//#include "template/problem_builder.h"
-//#include "setup.h"
 #include <sys/types.h>
 #include "multiobjective.h"
+#include "pfsp_moead.h"
 
 #ifdef EM_LIB
 #include <dirent.h>
@@ -108,11 +106,62 @@ int main(int argc, char *argv[])
         extern bool is_tpls;
         extern bool is_pls;
         extern bool is_tppls;
+        extern bool is_ga;
 
         if (is_tpls || is_pls || is_tppls)
         {
-            executeMultiObjective(ls, pls, time, is_tpls, is_pls, is_tppls);
-        } 
+            if (is_ga)
+            {
+                auto* ga = dynamic_cast<emili::GeneticAlgorithm*>(ls);
+                if (!ga)
+                {
+                    std::cerr << "Error: is_ga is true but ls is not GeneticAlgorithm" << std::endl;
+                    return 1;
+                }
+
+                // 2) Récupérer le problème PFSP_TPLS
+                auto* problem = dynamic_cast<emili::pfsp::PFSP_TPLS*>(
+                    &ga->getInitialSolution().getProblem());
+                if (!problem)
+                {
+                    std::cerr << "Error: MOEAD requires PFSP_TPLS problem" << std::endl;
+                    return 1;
+                }
+
+                // 3) Choisir les paramètres MOEAD (tu peux les dériver du GA ou les fixer)
+                int   popSize   = ga->getPopulationSize();
+                int   neighSize = std::min(10, popSize);     // par ex. 10 voisins
+                float cr        = ga->getCrossoverRate();
+                float mr        = ga->getMutationRate();
+                float timeLimit = ga->getSearchTime();       // temps max que tu as donné via -it
+
+                // 4) Construire MOEAD en réutilisant les opérateurs du GA
+                emili::pfsp::MOEAD moead(*problem,
+                                        ga->getInitialSolutionRef(),
+                                        ga->getSelection(),
+                                        ga->getCrossover(),
+                                        ga->getMutation(),
+                                        ga->getImprover(),
+                                        popSize,
+                                        neighSize,
+                                        cr,
+                                        mr,
+                                        timeLimit);
+
+                std::cout << "Running MOEAD instead of TPLS/PLS for GA..." << std::endl;
+                moead.run();
+                moead.writeParetoFrontToCSV("graph.csv");
+
+                // On peut afficher du temps si tu veux
+                double time_elapsed = (double)(clock() - time) / CLOCKS_PER_SEC;
+                std::cout << "time : " << time_elapsed << std::endl;
+                std::cout << "iteration counter : " << emili::iteration_counter() << std::endl;
+            }
+            else 
+            {
+                executeMultiObjective(ls, pls, time, is_tpls, is_pls, is_tppls);
+            }
+        }
         else {
             pls = ls->getSearchTime();//ps.ils_time;
             emili::Solution* solution;

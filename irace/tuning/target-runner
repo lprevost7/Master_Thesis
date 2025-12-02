@@ -1,6 +1,8 @@
 #!/bin/bash
 ###############################################################################
 # This script is the command that is executed every run.
+# Check the examples in examples/
+#
 # This script is run in the execution directory (execDir, --exec-dir).
 #
 # PARAMETERS:
@@ -14,6 +16,13 @@
 # This script should print one numerical value: the cost that must be minimized.
 # Exit with 0 if no error, with 1 in case of error
 ###############################################################################
+## Find our own location.
+# BINDIR=$(dirname "$(readlink -f "$(type -P $0 || echo $0)")")
+
+# EDIT THIS: Path to your executable
+EXE=~/bin/program
+# EDIT THIS: Specify how parameters are given to your executable
+EXE_PARAMS="--time 5 -i $INSTANCE --seed ${SEED} ${CONFIG_PARAMS}"
 
 error() {
     echo "`TZ=UTC date`: $0: error: $@"
@@ -29,60 +38,42 @@ shift 4 || error "Not enough parameters"
 CONFIG_PARAMS=$*
 # End of parsing
 
-# EDIT THIS: Path to your executable
-# (ici on suppose que 'emili' est dans execDir ou accessible via chemin relatif)
-EXE="../../math/Implementation/build/emili"
-
-# EDIT THIS: Specify how parameters are given to your executable
-# Pour EMILI, on veut: ./emili <instance> PFSP_TCT <pivot> <init> <term> <neigh>
-# où <pivot> <init> <term> <neigh> sont contenus dans ${CONFIG_PARAMS}
-EXE_PARAMS="${INSTANCE} PFSP_TCT ${CONFIG_PARAMS}"
-
-if [ ! -x "${EXE}" ]; then
-    # Si EXE n’est pas trouvable localement, essayer via PATH (optionnel)
-    if ! command -v ${EXE} >/dev/null 2>&1; then
-        error "${EXE}: not found or not executable (pwd: $(pwd))"
-    fi
+if [ ! -x "$(command -v ${EXE})" ]; then
+    error "${EXE}: not found or not executable (pwd: $(pwd))"
 fi
+
+# # If the program just prints a number, we can use 'exec' to avoid creating
+# # another process, but there can be no other commands after exec, only exit.
+# exec $EXE ${EXE_PARAMS}
+# exit 1
 
 # These files are saved in execDir. Saving them in /tmp may be faster.
 STDOUT=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stdout
 STDERR=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
 
-# Pour debug, tu peux décommenter :
-# echo "$EXE ${EXE_PARAMS} 1> ${STDOUT} 2> ${STDERR}" >&2
-
-# Lancer EMILI. Si tu veux ignorer certains signaux, tu peux mettre {} autour.
+# # Otherwise, save the output to a file, and parse the result from it.  (If
+# # you wish to ignore segmentation faults you can use '{}' around the
+# # command.)
+# # If the command below fails, but you are not sure why, it may be useful to
+# # print it before executing using 'echo', as in:
+# echo "$EXE ${EXE_PARAMS} 1> ${STDOUT} 2> ${STDERR}"
 $EXE ${EXE_PARAMS} 1> ${STDOUT} 2> ${STDERR}
-STATUS=$?
 
-if [ ${STATUS} -ne 0 ]; then
-    # Programme crash → renvoyer un coût énorme
-    echo "1000000000000"
-    # Commenter la ligne suivante si tu veux garder les logs en cas de crash
-    # rm -f "${STDOUT}" "${STDERR}"
-    exit 0
-fi
+# # This may be used to introduce a delay if there are filesystem issues.
+# SLEEPTIME=1
+# while [ ! -s "${STDOUT}" ]; do
+#     sleep $SLEEPTIME
+#     let "SLEEPTIME += 1"
+# done
 
 if [ ! -s "${STDOUT}" ]; then
     error "${STDOUT}: No such file or directory"
 fi
-
-# On sait qu’EMILI produit une ligne avec juste le nombre du coût (ex: 137258.000000).
-# On récupère la dernière ligne qui est "seulement" un nombre (éventuellement avec espaces).
-COST=$(grep -E '^[[:space:]]*[0-9]+(\.[0-9]+)?[[:space:]]*$' "${STDOUT}" | tail -n 1 | tr -d '[:space:]')
-
-# Garde-fou : vérifier que c’est bien un nombre
-if ! echo "${COST}" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; then
-    echo "`TZ=UTC date`: $0: warning: COST not numeric, got '${COST}', returning huge cost" >&2
-    echo "1000000000000"
-    # Commenter si tu veux garder les fichiers
-    rm -f "${STDOUT}" "${STDERR}"
-    exit 0
-fi
-
-echo "${COST}"
-
+# This is an example of reading a number from the output.  It assumes that the
+# objective value is the first number in the first column of the last line of
+# the output.
+COST=$(tail -n 1 ${STDOUT} | grep -e '^[[:space:]]*[+-]\?[0-9]' | cut -f1)
+echo "$COST"
 # Comment the following line if you wish to preserve temporary files (e.g., for debugging)
 rm -f "${STDOUT}" "${STDERR}"
 exit 0
