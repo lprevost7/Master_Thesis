@@ -1,2 +1,20 @@
-/build
-/CMakeFiles
+# Build files
+/build/
+/CMakeFiles/
+CMakeCache.txt
+Makefile
+
+# Binaries
+*.o
+*.a
+*.so
+*.exe
+*.out
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
