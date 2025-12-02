@@ -297,7 +297,8 @@ void MOEAD::writeParetoFrontToCSV(const std::string& filename) const
     // 1) Récupérer un ensemble non dominé (clones)
     std::vector<emili::Solution*> pareto = getNonDominatedSet();
 
-    std::ofstream out(filename.c_str());
+    // On ouvre le fichier en mode "trunc" pour réécrire depuis zéro
+    std::ofstream out(filename.c_str(), std::ios::trunc);
     if (!out)
     {
         std::cerr << "MOEAD::writeParetoFrontToCSV: cannot open file "
@@ -307,7 +308,15 @@ void MOEAD::writeParetoFrontToCSV(const std::string& filename) const
         return;
     }
 
-    // 2) Pour chaque solution Pareto, recalculer (f1,f2) et écrire
+    // 2) Écrire le header compatible avec ton parser
+    out << "X,Y,Color\n";
+
+    // Couleur fixe (rouge), même convention que writeResultsToFile
+    const double colR = 1.0;
+    const double colG = 0.0;
+    const double colB = 0.0;
+
+    // 3) Pour chaque solution Pareto, recalculer (f1,f2) et écrire
     for (emili::Solution* s : pareto)
     {
         auto* pfspSol = dynamic_cast<PermutationFlowShopSolution*>(s);
@@ -320,21 +329,25 @@ void MOEAD::writeParetoFrontToCSV(const std::string& filename) const
 
         const std::vector<int>& seq = pfspSol->getJobSchedule();
 
-        // On fait deux copies non const pour éviter les soucis (les fonctions peuvent modifier la séquence)
+        // Copies non const si les fonctions peuvent modifier la séquence
         std::vector<int> seq1(seq);
         std::vector<int> seq2(seq);
 
         int f1 = problem.getValueSolutionProblem1(seq1);
         int f2 = problem.getValueSolutionProblem2(seq2);
 
-        // Format type "graph.csv" (une ligne = "f1;f2")
-        out << f1 << ";" << f2 << "\n";
+        // Même format que writeResultsToFile :
+        // X,Y,"(R,G,B)"
+        out << f1 << "," << f2
+            << ",\"(" << colR << "," << colG << "," << colB << ")\"\n";
 
-        delete s; // on libère chaque clone
+        // On libère chaque clone
+        delete s;
     }
 
     out.close();
 }
 
+
 } // namespace pfsp
-} // namespace emili
+}

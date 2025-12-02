@@ -23,7 +23,7 @@ extern bool is_ga;
 #define PRINT_SOLUTION "ps"
 #define DEFAULT_IT 0
 #define DEFAULT_TPLSSTEP 100
-#define GIT_COMMIT_NUMBER "f40f8fbd244a021c54b167b5218ddf69b4178603"
+#define GIT_COMMIT_NUMBER "582a353520983201eb8fd6a883450d87ebc39edd"
 /*Base Initials*/
 #define COMPOSED_INITIAL "cinit"
 /*Base Algos */
