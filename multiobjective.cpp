@@ -142,6 +142,62 @@ void sortSolutionsForPLS(std::vector<emili::Solution*>& solVector, emili::pfsp::
               });
 }
 
+double computeHypervolume2D(const std::vector<std::pair<double,double>>& points,
+                            double refX,
+                            double refY)
+{
+    if (points.empty())
+    {
+        return 0.0;
+    }
+
+    // Copie
+    std::vector<std::pair<double,double>> pts = points;
+
+    // Tri par X croissant, et en cas d'égalité, Y décroissant
+    std::sort(pts.begin(), pts.end(),
+              [](const std::pair<double,double>& a,
+                 const std::pair<double,double>& b)
+              {
+                  if (a.first < b.first) return true;
+                  if (a.first > b.first) return false;
+                  return a.second > b.second; // même X -> plus grand Y en premier
+              });
+
+    // (Optionnel mais propre) : forcer la monotonicité de Y (non croissant)
+    double lastY = pts[0].second;
+    for (size_t i = 1; i < pts.size(); ++i)
+    {
+        if (pts[i].second > lastY)
+        {
+            pts[i].second = lastY; // on "projette" pour garantir la forme en escalier
+        }
+        else
+        {
+            lastY = pts[i].second;
+        }
+    }
+
+    // Calcul de l'hypervolume
+    double hv = 0.0;
+    for (size_t i = 0; i < pts.size(); ++i)
+    {
+        double xL = pts[i].first;
+        double xR = (i + 1 < pts.size()) ? pts[i+1].first : refX;
+        double y  = pts[i].second;
+
+        double width  = xR - xL;
+        double height = refY - y;
+
+        if (width > 0.0 && height > 0.0)
+        {
+            hv += width * height;
+        }
+    }
+
+    return hv;
+}
+
 /**
  * generateParetoFront
  * ---------------------------------------------------------------
@@ -498,6 +554,39 @@ void executeMultiObjective(emili::LocalSearch* ls, float pls, clock_t startTime,
     }
 
     writeResultsToFile(ObjValX, ObjValY);
+    /*
+
+    CA fonctione pas 
+
+    std::vector<std::pair<double,double>> moPoints;
+    moPoints.reserve(ObjValX.size());
+
+    int maxX = std::numeric_limits<int>::min();
+    int maxY = std::numeric_limits<int>::min();
+
+    for (size_t i = 0; i < ObjValX.size(); ++i)
+    {
+        int x = ObjValX[i];
+        int y = ObjValY[i];
+        moPoints.emplace_back(static_cast<double>(x),
+                            static_cast<double>(y));
+
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+    }
+
+    // Choisir le point de référence (un peu pire que le pire point)
+    double refX = static_cast<double>(maxX) * 1.01;
+    double refY = static_cast<double>(maxY) * 1.01;
+
+    // Calculer l'hypervolume
+    double hv = computeHypervolume2D(moPoints, refX, refY);
+
+    // L'afficher pour irace (ou logs)
+    std::cout << "Hypervolume (2D, minimisation) : " << hv << std::endl;
+    */
+
+
     // Print total execution time (like single-objective version) unconditionally.
     double time_elapsed = (double)(clock() - startTime) / CLOCKS_PER_SEC;
     std::cout << "time : " << time_elapsed << std::endl;

@@ -4,6 +4,7 @@ aux_source_directory(. SRC_LIST)
 aux_source_directory(./pfsp SRC_LIST)
 list(APPEND SRC_LIST multiobjective.cpp)
 list(APPEND SRC_LIST psfsp_moead.cpp)
+list(APPEND SRC_LIST moocore/c)
 #aux_source_directory(./template SRC_LIST)
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11")
 option(USE_SSE "Use SSE compile path if available" OFF)
@@ -16,6 +17,20 @@ option(O3_FLAGS "compiles EMILI using the default -O3 flag" ON)
 option(DEBUG_FLAGS "compiles EMILI using the debug flags" OFF)
 option(USE_EM_LIB "experimental library based extension mechanism" OFF)
 option(PORTABLE "Links the shared library in a static way" OFF)
+
+set(MOOCORE_DIR "moocore/c")
+include_directories(${MOOCORE_DIR})
+
+find_library(MOOCORE_LIB
+    NAMES moocore
+    PATHS ${MOOCORE_DIR}
+    NO_DEFAULT_PATH)
+
+if (MOOCORE_LIB)
+    message(STATUS "Found moocore library: ${MOOCORE_LIB}")
+else()
+    message(WARNING "moocore library not found. Check MOOCORE_DIR and library name.")
+endif()
 
 #IRACE flags
 if(IRACE_OPTIMISED_FLAGS)
@@ -104,3 +119,7 @@ if(WRITE_COMMIT_ID)
     add_dependencies(${PROJECT_NAME} GNUM)
     add_dependencies(CGNUM GNUM)
 endif(WRITE_COMMIT_ID)
+
+if (MOOCORE_LIB)
+    target_link_libraries(${PROJECT_NAME} ${MOOCORE_LIB})
+endif()

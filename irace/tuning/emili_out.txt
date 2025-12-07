@@ -1,0 +1,40 @@
+	 ______ __  __ _____ _      _____ 
+	|  ____|  \/  |_   _| |    |_   _|
+	| |__  | \  / | | | | |      | |  
+	|  __| | |\/| | | | | |      | |  
+	| |____| |  | |_| |_| |____ _| |_ 
+	|______|_|  |_|_____|______|_____|
+
+commit : e0f83f28dc252c82c9d51c37c83df347cb39c378
+Random seed : 724133039
+NAME PROBLEM
+Problem: PFSP_MS
+name : ta052.txt
+file : ../../Benchmarks/ta052.txt
+File ../../Benchmarks/ta052.txt is now open, start to read...
+Number of jobs : 50
+Number of machines : 20
+Memory allowed.
+Start to read matrix...
+All is read from file.
+Permutation Flow Shop Make Span
+Problem is a single objective problem
+  ILS 
+    FIRST IMPROVEMENT
+        Random initial solution
+        Local minima termination
+        Transpose neighborhood
+      Local minima termination
+      Random swap test perturbation.
+      improve acceptance
+(order–independent) Run time secs : 30
+The print option is not enabled
+searching...
+timer set 30 seconds 
+timer stopped
+time : 0.000238
+iteration counter : 745
+Objective function value: 4476.000000
+4476.000000
+Found solution: { 22, 1, 34, 25, 36, 47, 12, 5, 45, 19, 32, 9, 16, 24, 49, 48, 20, 4, 8, 3, 44, 40, 18, 43, 14, 28, 27, 41, 2, 29, 13, 50, 42, 21, 17, 38, 15, 37, 10, 26, 23, 35, 30, 46, 33, 39, 31, 11, 6, 7 }
+
