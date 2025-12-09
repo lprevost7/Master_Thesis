@@ -31,6 +31,13 @@
 #include <ctime>
 #include <limits>
 
+#ifndef restrict
+#define restrict __restrict__
+#endif
+
+#include "moocore/c/hv.h"
+#include "moocore/c/config.h"  // for dimension_t
+
 // Conditional logging macro (silent by default unless ENABLE_MO_DEBUG defined)
 #ifndef MO_LOG
 #ifdef ENABLE_MO_DEBUG
@@ -151,51 +158,21 @@ double computeHypervolume2D(const std::vector<std::pair<double,double>>& points,
         return 0.0;
     }
 
-    // Copie
-    std::vector<std::pair<double,double>> pts = points;
-
-    // Tri par X croissant, et en cas d'égalité, Y décroissant
-    std::sort(pts.begin(), pts.end(),
-              [](const std::pair<double,double>& a,
-                 const std::pair<double,double>& b)
-              {
-                  if (a.first < b.first) return true;
-                  if (a.first > b.first) return false;
-                  return a.second > b.second; // même X -> plus grand Y en premier
-              });
-
-    // (Optionnel mais propre) : forcer la monotonicité de Y (non croissant)
-    double lastY = pts[0].second;
-    for (size_t i = 1; i < pts.size(); ++i)
+    // Flatten the point set as expected by moocore (point-major order).
+    const size_t n = points.size();
+    std::vector<double> data;
+    data.reserve(n * 2);
+    for (const auto& p : points)
     {
-        if (pts[i].second > lastY)
-        {
-            pts[i].second = lastY; // on "projette" pour garantir la forme en escalier
-        }
-        else
-        {
-            lastY = pts[i].second;
-        }
+        data.push_back(p.first);
+        data.push_back(p.second);
     }
 
-    // Calcul de l'hypervolume
-    double hv = 0.0;
-    for (size_t i = 0; i < pts.size(); ++i)
-    {
-        double xL = pts[i].first;
-        double xR = (i + 1 < pts.size()) ? pts[i+1].first : refX;
-        double y  = pts[i].second;
+    // Reference point must be strictly dominated by all points (minimisation).
+    double ref[2] = {refX, refY};
+    const dimension_t d = 2; // Provided by moocore/config.h via hv.h
 
-        double width  = xR - xL;
-        double height = refY - y;
-
-        if (width > 0.0 && height > 0.0)
-        {
-            hv += width * height;
-        }
-    }
-
-    return hv;
+    return fpli_hv(data.data(), n, d, ref);
 }
 
 /**
@@ -554,9 +531,7 @@ void executeMultiObjective(emili::LocalSearch* ls, float pls, clock_t startTime,
     }
 
     writeResultsToFile(ObjValX, ObjValY);
-    /*
 
-    CA fonctione pas 
 
     std::vector<std::pair<double,double>> moPoints;
     moPoints.reserve(ObjValX.size());
@@ -584,7 +559,7 @@ void executeMultiObjective(emili::LocalSearch* ls, float pls, clock_t startTime,
 
     // L'afficher pour irace (ou logs)
     std::cout << "Hypervolume (2D, minimisation) : " << hv << std::endl;
-    */
+    
 
 
     // Print total execution time (like single-objective version) unconditionally.
