@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+
+# ==============================
+# Arguments IRACE
+# ==============================
+# Exemple dans ton log :
+# target-runner-ga-single 1 4 SEED ../../../Benchmarks/ta054.txt  100 0.8 0.1 2 random locmin ga memetic insert ...
+
+ID_CONFIG=$1
+ID_INSTANCE=$2
+SEED=$3
+INSTANCE=$4
+
+shift 4
+
+# ==============================
+# Paramètres positionnels (ordre = parameters.txt)
+# ==============================
+popSize=$1
+cr=$2
+mr=$3
+k=$4
+initial=$5
+termination=$6
+ga_mode=$7
+neigh=$8
+shift 8
+
+# S'il reste un argument, c'est la valeur pour certaines terminations
+extra_term_param=""
+if [[ $# -gt 0 ]]; then
+    extra_term_param=$1
+fi
+
+# ==============================
+# INITIAL (simple pour l'instant)
+# ==============================
+init_cmd="$initial"
+
+# ==============================
+# TERMINATION
+# ==============================
+case "$termination" in
+    true|locmin)
+        term_cmd="$termination"
+        ;;
+    time|iteration|maxstep|msnoimprov|soater|karter)
+        term_cmd="$termination $extra_term_param"
+        ;;
+    *)
+        term_cmd="locmin"
+        ;;
+esac
+
+# ==============================
+# NEIGHBORHOOD (pour memetic)
+# ==============================
+if [[ "$ga_mode" == "memetic" ]]; then
+    # si jamais NA se balade, on met un défaut
+    if [[ "$neigh" == "NA" || -z "$neigh" ]]; then
+        neigh="insert"
+    fi
+fi
+
+# ==============================
+# Construction de la commande EMILI
+# ==============================
+# On utilise un tableau pour éviter les problèmes de quotes/espaces
+CMD=(../../../build/emili "$INSTANCE" PFSP_MS ga "$popSize" "$cr" "$mr")
+
+if [[ "$ga_mode" == "memetic" ]]; then
+    CMD+=("memetic")
+fi
+
+CMD+=("$init_cmd")
+
+# term_cmd peut contenir un mot ou deux
+for t in $term_cmd; do
+    CMD+=("$t")
+done
+
+CMD+=(ga_tournament "$k" ga_ox ga_swapmut)
+
+if [[ "$ga_mode" == "memetic" ]]; then
+    CMD+=("$neigh")
+fi
+
+# Si tu veux utiliser la seed dans emili un jour :
+# CMD+=(--seed "$SEED")
+
+# ==============================
+# Exécution
+# ==============================
+OUTPUT=$("${CMD[@]}" 2>&1)
+
+# ==============================
+# Extraction du coût
+# ==============================
+value=$(echo "$OUTPUT" | grep -i "Objective function value" | awk '{print $NF}' | tail -n 1)
+
+if ! [[ "$value" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+    value=1000000000000
+fi
+
+echo "$value"

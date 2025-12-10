@@ -2,6 +2,15 @@
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
+#include <limits>
+
+#ifndef restrict
+#define restrict __restrict__
+#endif
+
+#include "moocore/c/hv.h"
+#include "moocore/c/config.h"  // for dimension_t
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -9,6 +18,39 @@
 
 namespace emili {
 namespace pfsp {
+
+/**
+ * computeHypervolume2D
+ * ---------------------------------------------------------------
+ * Computes the 2D hypervolume using moocore's fpli_hv algorithm.
+ * Points are expected to be in minimization form.
+ * refX, refY: reference point (should be dominated by all points).
+ */
+double computeHypervolume2D(const std::vector<std::pair<double,double>>& points,
+                            double refX,
+                            double refY)
+{
+    if (points.empty())
+    {
+        return 0.0;
+    }
+
+    // Flatten the point set as expected by moocore (point-major order).
+    const size_t n = points.size();
+    std::vector<double> data;
+    data.reserve(n * 2);
+    for (const auto& p : points)
+    {
+        data.push_back(p.first);
+        data.push_back(p.second);
+    }
+
+    // Reference point must be strictly dominated by all points (minimisation).
+    double ref[2] = {refX, refY};
+    const dimension_t d = 2; // Provided by moocore/config.h via hv.h
+
+    return fpli_hv(data.data(), n, d, ref);
+}
 
 MOEAD::MOEAD(PFSP_TPLS& prob,
              emili::InitialSolution& initSol,
@@ -316,6 +358,13 @@ void MOEAD::writeParetoFrontToCSV(const std::string& filename) const
     const double colG = 0.0;
     const double colB = 0.0;
 
+    // Collect objective pairs for hypervolume computation
+    std::vector<std::pair<double,double>> moPoints;
+    moPoints.reserve(pareto.size());
+
+    int maxX = std::numeric_limits<int>::min();
+    int maxY = std::numeric_limits<int>::min();
+
     // 3) Pour chaque solution Pareto, recalculer (f1,f2) et écrire
     for (emili::Solution* s : pareto)
     {
@@ -341,11 +390,22 @@ void MOEAD::writeParetoFrontToCSV(const std::string& filename) const
         out << f1 << "," << f2
             << ",\"(" << colR << "," << colG << "," << colB << ")\"\n";
 
+        // Collect for hypervolume computation
+        moPoints.emplace_back(static_cast<double>(f1), static_cast<double>(f2));
+        if (f1 > maxX) maxX = f1;
+        if (f2 > maxY) maxY = f2;
+
         // On libère chaque clone
         delete s;
     }
 
     out.close();
+
+    // Compute and print hypervolume
+    double refX = static_cast<double>(maxX) * 1.01;
+    double refY = static_cast<double>(maxY) * 1.01;
+    double hv = computeHypervolume2D(moPoints, refX, refY);
+    std::cout << "Hypervolume (2D, minimisation) : " << hv << std::endl;
 }
 
 

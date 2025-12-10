@@ -1,5 +1,5 @@
 parameterFile       = "parameters.txt"
-trainInstancesFile  = "instances-list.txt"
+trainInstancesFile  = "../instances-list.txt"
 configurationsFile  = "configurations.txt"
 
 targetRunner        = "./target-runner"

@@ -559,8 +559,6 @@ void executeMultiObjective(emili::LocalSearch* ls, float pls, clock_t startTime,
 
     // L'afficher pour irace (ou logs)
     std::cout << "Hypervolume (2D, minimisation) : " << hv << std::endl;
-    
-
 
     // Print total execution time (like single-objective version) unconditionally.
     double time_elapsed = (double)(clock() - startTime) / CLOCKS_PER_SEC;

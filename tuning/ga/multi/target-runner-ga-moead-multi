@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+
+# ==============================
+# Arguments IRACE
+# ==============================
+ID_CONFIG=$1
+ID_INSTANCE=$2
+SEED=$3
+INSTANCE=$4
+
+shift 4
+
+# ==============================
+# Paramètres positionnels (ordre = parameters_ga_moead_multi.txt)
+# ==============================
+popSize=$1
+cr=$2
+mr=$3
+k=$4
+initial=$5
+lr_size=$6
+nlr_size=$7
+irand_param=$8
+ga_mode=$9
+neigh=${10}
+termination=${11}
+time_value=${12}
+iteration_value=${13}
+maxstep_value=${14}
+msnoimprov_value=${15}
+soater_value=${16}
+karter_value=${17}
+it_param=${18}
+
+# ==============================
+# INITIAL
+# ==============================
+if [[ "$initial" == "lr" ]]; then
+    init_cmd="lr $lr_size"
+elif [[ "$initial" == "nlr" ]]; then
+    init_cmd="nlr $nlr_size"
+elif [[ "$initial" == "irandom" ]]; then
+    init_cmd="irandom $irand_param"
+else
+    init_cmd="$initial"
+fi
+
+# ==============================
+# TERMINATION
+# ==============================
+case "$termination" in
+    true|locmin)
+        term_cmd="$termination"
+        ;;
+    time)
+        term_cmd="time $time_value"
+        ;;
+    iteration)
+        term_cmd="iteration $iteration_value"
+        ;;
+    maxstep)
+        term_cmd="maxstep $maxstep_value"
+        ;;
+    msnoimprov)
+        term_cmd="msnoimprov $msnoimprov_value"
+        ;;
+    soater)
+        term_cmd="soater $soater_value"
+        ;;
+    karter)
+        term_cmd="karter $karter_value"
+        ;;
+    *)
+        # fallback : time 60 si jamais
+        term_cmd="time 60"
+        ;;
+esac
+
+# ==============================
+# GA / MEMETIC
+# ==============================
+memetic_flag=""
+if [[ "$ga_mode" == "memetic" ]]; then
+    memetic_flag="memetic"
+    if [[ "$neigh" == "NA" || -z "$neigh" ]]; then
+        neigh="insert"
+    fi
+fi
+
+# ==============================
+# Construction de la commande EMILI
+# ==============================
+CMD=(../../../build/emili "$INSTANCE" PFSP_PLS PFSP_MS PFSP_TCT \
+     ga "$popSize" "$cr" "$mr")
+
+if [[ -n "$memetic_flag" ]]; then
+    CMD+=("$memetic_flag")
+fi
+
+CMD+=("$init_cmd")
+
+# term_cmd peut contenir 1 ou 2 mots
+for t in $term_cmd; do
+    CMD+=("$t")
+done
+
+CMD+=(ga_tournament "$k" ga_ox ga_swapmut)
+
+# IMPORTANT : on remet -step 10 (fixe) + -it tuné
+CMD+=(-step 10 -it "$it_param")
+
+if [[ -n "$memetic_flag" ]]; then
+    CMD+=("$neigh")
+fi
+
+# ==============================
+# Exécution
+# ==============================
+OUTPUT=$("${CMD[@]}" 2>&1)
+
+# Debug optionnel : sauver la dernière commande et la sortie
+echo "${CMD[@]}" > last_cmd_moead.txt
+echo "$OUTPUT" > last_output_moead.txt
+
+# ==============================
+# Extraction de l'hypervolume
+# ==============================
+# On cherche : Hypervolume (2D, minimisation) : 900800
+# On simplifie en prenant le dernier "mot" de la ligne, puis on nettoie
+hv_raw=$(echo "$OUTPUT" | grep -i "Hypervolume" | tail -n 1)
+hv=$(echo "$hv_raw" | awk '{print $NF}')
+
+# Si pas numérique => grosse pénalité POSITIVE
+if ! [[ "$hv" =~ ^[0-9]+([.][0-9]+)?([eE][-+]?[0-9]+)?$ ]]; then
+    cost=1000000000000
+else
+    # irace minimise, nous on veut max HV -> coût = -HV
+    cost=$(awk "BEGIN {print -1.0 * $hv}")
+fi
+
+echo "$cost"

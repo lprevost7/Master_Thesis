@@ -1,0 +1,2 @@
+popSize cr mr k initial lr_size nlr_size irand_param termination time_value iteration_value maxstep_value msnoimprov_value soater_value karter_value ga_mode neigh
+100 0.8 0.1 2 "random" NA NA NA "locmin" NA NA NA NA NA NA "ga" NA

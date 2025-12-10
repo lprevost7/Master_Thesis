@@ -21,16 +21,35 @@ option(PORTABLE "Links the shared library in a static way" OFF)
 set(MOOCORE_DIR "moocore/c")
 include_directories(${MOOCORE_DIR})
 
-find_library(MOOCORE_LIB
-    NAMES moocore
-    PATHS ${MOOCORE_DIR}
-    NO_DEFAULT_PATH)
+# Compile moocore source files directly
+set(MOOCORE_SOURCES
+    ${MOOCORE_DIR}/hv.c
+    ${MOOCORE_DIR}/hv_contrib.c
+    ${MOOCORE_DIR}/hv3dplus.c
+    ${MOOCORE_DIR}/hv4d.c
+    ${MOOCORE_DIR}/hvc3d.c
+    ${MOOCORE_DIR}/hvapprox.c
+    ${MOOCORE_DIR}/avl.c
+    ${MOOCORE_DIR}/nondominated.c
+    ${MOOCORE_DIR}/ndsort.c
+    ${MOOCORE_DIR}/pareto.c
+    ${MOOCORE_DIR}/io.c
+    ${MOOCORE_DIR}/timer.c
+    ${MOOCORE_DIR}/rng.c
+    ${MOOCORE_DIR}/cmdline.c
+    ${MOOCORE_DIR}/igd.c
+    ${MOOCORE_DIR}/whv_hype.c
+    ${MOOCORE_DIR}/libutil.c
+    ${MOOCORE_DIR}/eaf.c
+    ${MOOCORE_DIR}/eaf3d.c
+    ${MOOCORE_DIR}/dominatedsets.c
+)
 
-if (MOOCORE_LIB)
-    message(STATUS "Found moocore library: ${MOOCORE_LIB}")
-else()
-    message(WARNING "moocore library not found. Check MOOCORE_DIR and library name.")
-endif()
+# Create a static library from moocore
+add_library(moocore_lib STATIC ${MOOCORE_SOURCES})
+set_target_properties(moocore_lib PROPERTIES COMPILE_FLAGS "-fPIC")
+
+message(STATUS "moocore library will be compiled from source")
 
 #IRACE flags
 if(IRACE_OPTIMISED_FLAGS)
@@ -120,6 +139,5 @@ if(WRITE_COMMIT_ID)
     add_dependencies(CGNUM GNUM)
 endif(WRITE_COMMIT_ID)
 
-if (MOOCORE_LIB)
-    target_link_libraries(${PROJECT_NAME} ${MOOCORE_LIB})
-endif()
+# Link against moocore library
+target_link_libraries(${PROJECT_NAME} moocore_lib)

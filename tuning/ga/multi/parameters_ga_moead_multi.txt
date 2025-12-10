@@ -1,0 +1,39 @@
+# Population size
+popSize   ""  i   (20, 500)
+
+# Crossover rate
+cr        ""  r   (0.5, 1.0)
+
+# Mutation rate
+mr        ""  r   (0.0, 0.5)
+
+# Tournament selection parameter k
+k         ""  i   (1, 20)
+
+# Initial solution heuristic  
+initial   ""  c   (random, irandom, slack, lit, rz, nrz, nrz2, nrz2ff, srz, lr, lrnm, nlr, mneh, rmneh, nwslack, frb5, csfrb5, gfrb5, bs, bs2, bs2n, bsnn, bs2nf, ff, ffn, bscho, bschr, bsch)
+
+# Conditional params for initial
+lr_size       ""  i (1,200) | initial == "lr"
+nlr_size      ""  i (1,200) | initial == "nlr"
+irand_param   ""  i (1,200) | initial == "irandom"
+
+# GA ou GA mémétique
+ga_mode      ""  c (ga, memetic)
+
+# Voisinage utilisé SEULEMENT si memetic
+neigh        ""  c (insert, binsert, finsert, tinsert, transpose, xtranspose,exchange, adpinsert, karnghb, csinsert, atxexchange, hatxexchange, eatxexchange, oexchange, txinsert, atxinsert, oinsert, hatxinsert, natxinsert, natx2insert, thatxinsert, fatxinsert, patxinsert, satxinsert, eatxinsert, tatxinsert, ntctinsert, nrztctinsert, nttinsert, tainsert, fstainsert, cstainsert, ntainsert, nwinsert, nwtinsert, nwexchange, nwtranspose, sdsttainsert, sdstcsinsert) | ga_mode == "memetic"
+
+# Pour MOEA/D multi on force en pratique à "time", mais on laisse la grammaire générale
+termination "" c (true, locmin, time, iteration, maxstep, msnoimprov, soater, karter)
+
+# Conditional numeric parameters:
+time_value       "" r (10.0, 300.0)  | termination == "time"
+iteration_value  "" i (1, 10000)     | termination == "iteration"
+maxstep_value    "" i (1, 10000)     | termination == "maxstep"
+msnoimprov_value "" i (0, 5000)      | termination == "msnoimprov"
+soater_value     "" r (0.001, 10.0)  | termination == "soater"
+karter_value     "" r (0.1, 10.0)    | termination == "karter"
+
+# Paramètre spécifique MOEA/D (nombre d'itérations ou generations)
+it     ""  i (50, 1000)

@@ -1,0 +1,11 @@
+parameterFile = "parameters_ga_single.txt"
+trainInstancesFile = "../../instances-list.txt"
+configurationsFile = "configurations_ga_single.txt"
+
+targetRunner = "./target-runner-ga-single"
+
+maxExperiments = 2000
+
+logFile = "irace-ga-single.log"
+debugLevel = 0
+parallel = 4

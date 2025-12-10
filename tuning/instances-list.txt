@@ -7,7 +7,7 @@
 
 # Empty lines and comments are ignored.
 
-../../Benchmarks/ta051.txt
-../../Benchmarks/ta052.txt
-../../Benchmarks/ta053.txt
-../../Benchmarks/ta054.txt
+../../../Benchmarks/ta051.txt
+../../../Benchmarks/ta052.txt
+../../../Benchmarks/ta053.txt
+../../../Benchmarks/ta054.txt
