@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
+#include <iomanip>
 
 #ifndef restrict
 #define restrict __restrict__
@@ -334,80 +335,60 @@ std::vector<emili::Solution*> MOEAD::getNonDominatedSet() const
     return pareto;
 }
 
-void MOEAD::writeParetoFrontToCSV(const std::string& filename) const
+void MOEAD::printHypervolume() const
 {
-    // 1) Récupérer un ensemble non dominé (clones)
+    // Récupération du Pareto non dominé (des clones)
     std::vector<emili::Solution*> pareto = getNonDominatedSet();
 
-    // On ouvre le fichier en mode "trunc" pour réécrire depuis zéro
-    std::ofstream out(filename.c_str(), std::ios::trunc);
-    if (!out)
-    {
-        std::cerr << "MOEAD::writeParetoFrontToCSV: cannot open file "
-                  << filename << std::endl;
-        // On nettoie quand même
-        for (auto* s : pareto) { delete s; }
-        return;
-    }
-
-    // 2) Écrire le header compatible avec ton parser
-    out << "X,Y,Color\n";
-
-    // Couleur fixe (rouge), même convention que writeResultsToFile
-    const double colR = 1.0;
-    const double colG = 0.0;
-    const double colB = 0.0;
-
-    // Collect objective pairs for hypervolume computation
+    // Collecte (f1,f2)
     std::vector<std::pair<double,double>> moPoints;
     moPoints.reserve(pareto.size());
 
-    int maxX = std::numeric_limits<int>::min();
-    int maxY = std::numeric_limits<int>::min();
+    double maxX = -1e300;
+    double maxY = -1e300;
 
-    // 3) Pour chaque solution Pareto, recalculer (f1,f2) et écrire
     for (emili::Solution* s : pareto)
     {
         auto* pfspSol = dynamic_cast<PermutationFlowShopSolution*>(s);
         if (!pfspSol)
         {
-            std::cerr << "MOEAD::writeParetoFrontToCSV: wrong solution type\n";
             delete s;
             continue;
         }
 
         const std::vector<int>& seq = pfspSol->getJobSchedule();
 
-        // Copies non const si les fonctions peuvent modifier la séquence
+        // Copie si getValueSolutionProblemX modifie la séquence
         std::vector<int> seq1(seq);
         std::vector<int> seq2(seq);
 
-        int f1 = problem.getValueSolutionProblem1(seq1);
-        int f2 = problem.getValueSolutionProblem2(seq2);
+        double f1 = problem.getValueSolutionProblem1(seq1);
+        double f2 = problem.getValueSolutionProblem2(seq2);
 
-        // Même format que writeResultsToFile :
-        // X,Y,"(R,G,B)"
-        out << f1 << "," << f2
-            << ",\"(" << colR << "," << colG << "," << colB << ")\"\n";
+        moPoints.emplace_back(f1, f2);
 
-        // Collect for hypervolume computation
-        moPoints.emplace_back(static_cast<double>(f1), static_cast<double>(f2));
         if (f1 > maxX) maxX = f1;
         if (f2 > maxY) maxY = f2;
 
-        // On libère chaque clone
-        delete s;
+        delete s; // libération du clone
     }
 
-    out.close();
+    // Si aucun point → hypervolume nul
+    if (moPoints.empty())
+    {
+        std::cout << "Hypervolume (2D,min) : 0\n";
+        return;
+    }
 
-    // Compute and print hypervolume
-    double refX = static_cast<double>(maxX) * 1.01;
-    double refY = static_cast<double>(maxY) * 1.01;
+    // Référence pour hypervolume (un peu plus grand que le max)
+    double refX = maxX * 1.01;
+    double refY = maxY * 1.01;
+
     double hv = computeHypervolume2D(moPoints, refX, refY);
-    std::cout << "Hypervolume (2D, minimisation) : " << hv << std::endl;
-}
 
+    // Impression simple, propre, sans CSV :
+    std::cout << "HV " << hv << std::endl;
+}
 
 } // namespace pfsp
 }

@@ -1,29 +1,27 @@
 Algorithm,Parameter,ParamType,Token/Options,LogicalInterval/Notes
-ch6,initial_solution,word,INITIAL_*,See INITIAL_* tokens section below
-ch6,termination,word,TERMINATION_*,See TERMINATION_* section below
+ch6,initial_solution,word,INITIAL_*,Initial solution token (lr/nlr/irandom carry an integer)
+ch6,termination,word,TERMINATION_*,true|locmin|time <f>|iteration <i>|maxstep <i>|msnoimprov <i>|soater <f>
 ch6,neighborhood1,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* section below
 ch6,neighborhood2,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* section below
-ris,initial_solution,word,INITIAL_*,See INITIAL_* tokens
-ris,termination,word,TERMINATION_*,See TERMINATION_* tokens
-ris,neighborhood,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* tokens
-tabu,mode,word,first|best,Choice of tabu update rule
-tabu,initial_solution,word,INITIAL_*,See INITIAL_* tokens
-tabu,termination,word,TERMINATION_*,See TERMINATION_* tokens
-tabu,neighborhood,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* tokens
-tabu,tabu_memory,word,TABU_MEMORY_*,See TABU_MEMORY_* section below
+ris,initial_solution,word,INITIAL_*,RIS only takes the initial solution (no termination/neighborhood)
+tabu,mode,word,first|best,Tabu move acceptance rule
+tabu,initial_solution,word,INITIAL_*,Initial solution token
+tabu,termination,word,TERMINATION_*,true|locmin|time <f>|iteration <i>|maxstep <i>|msnoimprov <i>|soater <f>
+tabu,neighborhood,word,NEIGHBORHOOD_*,Move neighborhood
+tabu,tabu_memory,word,TABU_MEMORY_*,Tabu memory type
+tabu,tabu_memory_size,number,int,Size for memory types that need it
 vnd,mode,word,first|best,Tie-breaking strategy
-vnd,initial_solution,word,INITIAL_*,See INITIAL_* tokens
-vnd,termination,word,TERMINATION_*,See TERMINATION_* tokens
-vnd,neighborhoods,word,NEIGHBORHOOD_* (2+),Ordered list of 2 or more neighborhoods
-gvns,initial_solution,word,INITIAL_*,See INITIAL_* tokens
-gvns,perturbation1,word,PERTURBATION_*,See PERTURBATION_* section
-gvns,perturbation2,word,PERTURBATION_*,See PERTURBATION_* section
+vnd,initial_solution,word,INITIAL_*,Initial solution token
+vnd,termination,word,TERMINATION_*,true|locmin|time <f>|iteration <i>|maxstep <i>|msnoimprov <i>|soater <f>
+vnd,neighborhoods,word,NEIGHBORHOOD_* (2+),Ordered list of neighborhoods (none to skip)
+gvns,initial_solution,word,INITIAL_*,Initial solution token
+gvns,perturbation1,word,PERTURBATION_*,igper <i>|testper|rndmv NEIGH <i>|noper <i>|nrzper <i>|tmiigper <i>|nwtmiigper <i>|mptlm|restart|restartls|sdstigo|sdstigols
+gvns,perturbation2,word,PERTURBATION_*,Same options as perturbation1
 gvns,-it,number,seconds,float>0
-ils,local_search,word,LOCAL_SEARCH_SPEC,Full local-search specification (e.g., "first <initial> <term> <neigh>")
-ils,termination,word,TERMINATION_*,See TERMINATION_* tokens
-ils,perturbation,word,PERTURBATION_*,See PERTURBATION_* tokens
-ils,acceptance,word,ACCEPTANCE_*,See ACCEPTANCE_* section
-ils,-it,number,seconds,float>0
+ils,local_search,word,LOCAL_SEARCH_SPEC,first|best <initial> <termination> <neigh>
+ils,termination,word,TERMINATION_*,Outer termination: true|locmin|time <f>|iteration <i>|maxstep <i>|msnoimprov <i>|soater <f>
+ils,perturbation,word,PERTURBATION_*,igper <i>|testper|rndmv NEIGH <i>|noper <i>|nrzper <i>|tmiigper <i>|nwtmiigper <i>|mptlm|restart|restartls|sdstigo|sdstigols
+ils,acceptance,word,ACCEPTANCE_*,soaacc <f>|testacc <i>|metropolis <f>|always intensify|always diversify|improve|sa_metropolis <f> <f> <f>|pmetro <f> <f> <f> <i>|saacc <f> <f> <f> <i>|tmiigacc <f>|implat <i> <f>
 ga,popSize,number,integer,popSize,[2,∞) (practical upper bound depends on memory/time)
 ga,crossoverRate,number,float,crossoverRate,[0.0,1.0]
 ga,mutationRate,number,float,mutationRate,[0.0,1.0]
@@ -43,7 +41,7 @@ TERMINATION,soater,number,soater,float>0 (temperature-like; check builder for ex
 TERMINATION,iteration,number,iteration,<int> >= 1
 TERMINATION,maxstep,number,maxstep,<int> >= 1
 TERMINATION,msnoimprov,number,msnoimprov,<int> >= 0
-TERMINATION,karter,number,karter,Usually integer (check builder for exact semantics)
+TERMINATION,karter,number,UNUSED,Not supported by PFSP parser
 
 # INITIAL_SOLUTION tokens (each is a word token unless noted)
 INITIAL,random,word,random,Random constructive

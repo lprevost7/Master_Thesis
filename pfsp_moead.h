@@ -33,7 +33,7 @@ public:
     /// Lance l’algorithme jusqu’à atteindre la limite de temps.
     void run();
 
-    void writeParetoFrontToCSV(const std::string& filename) const;
+    void printHypervolume() const;
 
     /// Accès direct à la population interne (à ne pas delete).
     const std::vector<emili::Solution*>& getPopulation() const { return population; }

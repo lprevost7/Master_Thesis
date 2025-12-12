@@ -1,3 +1,0 @@
-initial "" c (random, irandom, mneh, frb5, bs)
-neigh   "" c (insert, binsert, transpose, exchange)
-tmax    "" i (5, 120)

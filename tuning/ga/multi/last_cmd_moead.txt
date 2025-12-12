@@ -1,1 +1,1 @@
-../../../build/emili ../../../Benchmarks/ta052.txt PFSP_PLS PFSP_MS PFSP_TCT ga 301 0.7639 0.0943 bsch time 60 ga_tournament 2 ga_ox ga_swapmut -step 10 -it 
+../../../build/emili ../../../Benchmarks/ta051.txt PFSP_PLS PFSP_MS PFSP_TCT ga 32 0.9224 0.3049 gfrb5 time 60 ga_tournament 18 ga_ox ga_swapmut -step 10 -it 

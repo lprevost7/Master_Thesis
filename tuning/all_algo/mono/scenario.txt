@@ -1,0 +1,10 @@
+parameterFile = "parameters.txt"
+trainInstancesFile = "../../instances-list.txt"
+
+targetRunner = "./target-runner"
+
+maxExperiments = 1008
+
+logFile = "irace-all-single.log"
+debugLevel = 0
+parallel = 4

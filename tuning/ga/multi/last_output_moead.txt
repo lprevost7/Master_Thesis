@@ -5,13 +5,13 @@
 	| |____| |  | |_| |_| |____ _| |_ 
 	|______|_|  |_|_____|______|_____|
 
-commit : 3c2e6acc9512d608c2d7c2506c0faa79a32d1b6e
+commit : 6c0e85e68fff649a05dcf7f655fd92eee73dad51
 Random seed : 0
 NAME PROBLEM
 Problem: PFSP_PLS
-name : ta052.txt
-file : ../../../Benchmarks/ta052.txt
-File ../../../Benchmarks/ta052.txt is now open, start to read...
+name : ta051.txt
+file : ../../../Benchmarks/ta051.txt
+File ../../../Benchmarks/ta051.txt is now open, start to read...
 Number of jobs : 50
 Number of machines : 20
 Memory allowed.
@@ -21,9 +21,9 @@ Permutation Flow Shop Multiobjective PLS
 Problem is multiobjective
 NAME PROBLEM
 Problem: PFSP_MS
-name : ta052.txt
-file : ../../../Benchmarks/ta052.txt
-File ../../../Benchmarks/ta052.txt is now open, start to read...
+name : ta051.txt
+file : ../../../Benchmarks/ta051.txt
+File ../../../Benchmarks/ta051.txt is now open, start to read...
 Number of jobs : 50
 Number of machines : 20
 Memory allowed.
@@ -34,16 +34,17 @@ Permutation Flow Shop TCT
 N5emili4pfsp7PFSP_MSE
 N5emili4pfsp8PFSP_TCTE
   GENETIC ALGORITHM
-    population size = 301
-    crossover rate = 0.7639
-    mutation rate = 0.0943
+    population size = 32
+    crossover rate = 0.9224
+    mutation rate = 0.3049
     Memetic local search: DISABLED (pure GA)
-       BS based initial solution
-        a : 9
-        b : 3
-        c : 7
-Usage:
-
-EMILI INSTANCE_FILE_PATH PROBLEM <ALGORITHM DESCRIPTION> [-it|-ro time] [rnds seed] [ps]
-
-PARSING ERROR A DECIMAL NUMBER WAS EXPECTED!
+      FRB5 initial solution
+      Permutation Flow Shop Multiobjective PLS
+      Timed termination. ratio: 60
+      GA tournament selection
+        k : 18
+      GA OX crossover
+      GA swap mutation
+Step : 10
+The print option is not enabled
+Running MOEAD instead of TPLS/PLS for GA...

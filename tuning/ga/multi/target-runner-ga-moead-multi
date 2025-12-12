@@ -50,7 +50,7 @@ fi
 # ==============================
 case "$termination" in
     true|locmin)
-        term_cmd="$termination"
+        term_cmd="locmin NA"
         ;;
     time)
         term_cmd="time $time_value"
@@ -122,13 +122,8 @@ OUTPUT=$("${CMD[@]}" 2>&1)
 echo "${CMD[@]}" > last_cmd_moead.txt
 echo "$OUTPUT" > last_output_moead.txt
 
-# ==============================
-# Extraction de l'hypervolume
-# ==============================
-# On cherche : Hypervolume (2D, minimisation) : 900800
-# On simplifie en prenant le dernier "mot" de la ligne, puis on nettoie
-hv_raw=$(echo "$OUTPUT" | grep -i "Hypervolume" | tail -n 1)
-hv=$(echo "$hv_raw" | awk '{print $NF}')
+
+hv=$(echo "$OUTPUT" | grep "HV" | awk '{print $2}' | tail -n 1)
 
 # Si pas numérique => grosse pénalité POSITIVE
 if ! [[ "$hv" =~ ^[0-9]+([.][0-9]+)?([eE][-+]?[0-9]+)?$ ]]; then

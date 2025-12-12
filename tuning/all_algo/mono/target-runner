@@ -1,0 +1,200 @@
+#!/bin/bash
+###############################################################################
+# This script is the command that is executed every run.
+# Check the examples in examples/
+#
+# This script is run in the execution directory (execDir, --exec-dir).
+#
+# PARAMETERS:
+# $1 is the candidate configuration number
+# $2 is the instance ID
+# $3 is the seed
+# $4 is the instance name
+# The rest ($* after `shift 4') are parameters to the run
+#
+# RETURN VALUE:
+# This script should print one numerical value: the cost that must be minimized.
+# Exit with 0 if no error, with 1 in case of error
+###############################################################################
+## Find our own location.
+# BINDIR=$(dirname "$(readlink -f "$(type -P $0 || echo $0)")")
+
+# Path to the compiled solver (relative to this script location)
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+EXE="${SCRIPT_DIR}/../../../build/emili"
+PROBLEM="PFSP_MS"
+
+error() {
+    echo "`TZ=UTC date`: $0: error: $@"
+    exit 1
+}
+
+# This parses the arguments given by irace. Do not touch it!
+CONFIG_ID=$1
+INSTANCE_ID=$2
+SEED=$3
+INSTANCE=$4
+shift 4 || error "Not enough parameters"
+CONFIG_PARAMS=$*
+# End of parsing
+
+# A safer tmp prefix per run (needs parsed IDs)
+RUN_TAG="c${CONFIG_ID}-${INSTANCE_ID}-${SEED}"
+STDOUT="${RUN_TAG}.stdout"
+STDERR="${RUN_TAG}.stderr"
+
+if [ ! -x "${EXE}" ]; then
+    error "${EXE}: not found or not executable (pwd: $(pwd))"
+fi
+
+# # If the program just prints a number, we can use 'exec' to avoid creating
+# # another process, but there can be no other commands after exec, only exit.
+# exec $EXE ${EXE_PARAMS}
+# exit 1
+
+# Parse key/value pairs (all switches are empty except --algorithm)
+ALG=""
+declare -A P
+set -- ${CONFIG_PARAMS}
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --algorithm)
+            ALG="$2"; shift 2;;
+        *)
+            key="$1"; val="$2"; P[$key]="$val"; shift 2;;
+    esac
+done
+
+if [ -z "${ALG}" ]; then
+    error "algorithm not specified"
+fi
+
+# Helpers ---------------------------------------------------------------
+initial_tokens() {
+    local init="${P[initial_solution]}"
+    case "$init" in
+        lr)   echo "lr ${P[initial_lr_size]}" ;;
+        nlr)  echo "nlr ${P[initial_nlr_size]}" ;;
+        irandom) echo "irandom ${P[initial_irandom_k]}" ;;
+        *)    echo "$init" ;;
+    esac
+}
+
+termination_tokens() {
+    local t="${P[termination]}"
+    case "$t" in
+        time) echo "time ${P[time_value]}" ;;
+        iteration) echo "iteration ${P[iteration_value]}" ;;
+        maxstep) echo "maxstep ${P[maxstep_value]}" ;;
+        msnoimprov) echo "msnoimprov ${P[msnoimprov_value]}" ;;
+        soater) echo "soater ${P[soater_value]}" ;;
+        true|locmin) echo "$t" ;;
+        *) echo "" ;;
+    esac
+}
+
+perturbation_tokens() {
+    local ptype="$1"; shift
+    case "$ptype" in
+        igper|noper|nrzper|tmiigper|nwtmiigper)
+            echo "$ptype ${P[$2]}" ;;
+        rndmv)
+            echo "rndmv ${P[$3]} ${P[$4]}" ;;
+        mptlm|restart|restartls|sdstigo|sdstigols|testper)
+            echo "$ptype" ;;
+        *) echo "" ;;
+    esac
+}
+
+acceptance_tokens() {
+    local atype="${P[acceptance]}"
+    case "$atype" in
+        soaacc) echo "soaacc ${P[acc_p1]}" ;;
+        testacc) echo "testacc ${P[acc_test_swaps]}" ;;
+        metropolis) echo "metropolis ${P[acc_p1]}" ;;
+        always) echo "always ${P[acc_always_mode]}" ;;
+        improve) echo "improve" ;;
+        sa_metropolis) echo "sa_metropolis ${P[acc_p1]} ${P[acc_p2]} ${P[acc_ratio]}" ;;
+        pmetro) echo "pmetro ${P[acc_p1]} ${P[acc_p2]} ${P[acc_ratio]} ${P[acc_freq]}" ;;
+        saacc) echo "saacc ${P[acc_p1]} ${P[acc_p2]} ${P[acc_ratio]} ${P[acc_freq]}" ;;
+        tmiigacc) echo "tmiigacc ${P[acc_p1]}" ;;
+        implat) echo "implat ${P[acc_implat_nonimp]} ${P[acc_implat_plateau]}" ;;
+        *) echo "" ;;
+    esac
+}
+
+neigh_token() {
+    local n="$1"; if [ "$n" != "none" ] && [ -n "$n" ]; then echo "$n"; fi
+}
+
+# Build command per algorithm ------------------------------------------
+CMD=("${EXE}" "${INSTANCE}" "${PROBLEM}")
+case "$ALG" in
+    ch6)
+        CMD+=("ch6" "$(initial_tokens)" $(termination_tokens) "${P[neigh1]}" "${P[neigh1b]:-${P[ch6_neigh2]:-${P[neigh2]}}}")
+        ;;
+    ris)
+        CMD+=("ris" "$(initial_tokens)")
+        ;;
+    tabu)
+        CMD+=("tabu" "${P[ls_mode]}" "$(initial_tokens)" $(termination_tokens) "${P[neigh1]}" "${P[tabu_memory]}")
+        if [ -n "${P[tabu_memory_size]}" ]; then CMD+=("${P[tabu_memory_size]}"); fi
+        ;;
+    vnd)
+        CMD+=("vnd" "${P[ls_mode]}" "$(initial_tokens)" $(termination_tokens))
+        n1=$(neigh_token "${P[neigh1]}"); n2=$(neigh_token "${P[neigh2]}"); n3=$(neigh_token "${P[neigh3]}")
+        [ -n "$n1" ] && CMD+=("$n1")
+        [ -n "$n2" ] && CMD+=("$n2")
+        [ -n "$n3" ] && CMD+=("$n3")
+        ;;
+    gvns)
+        p1=$(perturbation_tokens "${P[gvns_perturbation1]}" "gvns_p1_moves" "gvns_p1_rndmv_neigh" "gvns_p1_rndmv_moves")
+        p2=$(perturbation_tokens "${P[gvns_perturbation2]}" "gvns_p2_moves" "gvns_p2_rndmv_neigh" "gvns_p2_rndmv_moves")
+        CMD+=("gvns" "$(initial_tokens)")
+        [ -n "$p1" ] && CMD+=($p1)
+        [ -n "$p2" ] && CMD+=($p2)
+        CMD+=("-it" "${P[gvns_time]:-10}")
+        ;;
+    ils)
+        # Local search part: mode, initial, inner termination, neighborhood
+        CMD+=("ils" "${P[ls_mode]}" "$(initial_tokens)" $(termination_tokens) "${P[neigh1]}")
+        # Outer termination (reuse same termination tokens)
+        CMD+=($(termination_tokens))
+        # Perturbation
+        per=$(perturbation_tokens "${P[ils_perturbation]}" "ils_per_moves" "ils_per_rndmv_neigh" "ils_per_rndmv_moves")
+        [ -n "$per" ] && CMD+=($per)
+        # Acceptance
+        acc=$(acceptance_tokens)
+        [ -n "$acc" ] && CMD+=($acc)
+        ;;
+    *)
+        error "unsupported algorithm ${ALG}"
+        ;;
+esac
+
+# Uncomment to debug command lines
+# echo "Running: ${CMD[*]}" >&2
+
+"${CMD[@]}" 1>"${STDOUT}" 2>"${STDERR}" || error "solver failed"
+
+if [ ! -s "${STDOUT}" ]; then
+    error "${STDOUT}: No such file or directory"
+fi
+
+# Parse cost: last numeric field of the last line containing "Objective function value"
+COST=$(grep -i "Objective function value" "${STDOUT}" | awk '{print $NF}' | tail -n 1)
+
+# Fallback: last numeric-looking token in output
+if [ -z "${COST}" ]; then
+    COST=$(grep -Eo '[0-9]+(\.[0-9]+)?' "${STDOUT}" | tail -n 1)
+fi
+
+if [ -z "${COST}" ]; then
+    error "Could not parse objective value from output"
+fi
+
+echo "${COST}"
+
+# Comment the following line if you wish to preserve temporary files (e.g., for debugging)
+rm -f "${STDOUT}" "${STDERR}"
+exit 0

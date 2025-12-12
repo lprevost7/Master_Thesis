@@ -1,2 +1,0 @@
-initial neigh tmax
-random transpose 30

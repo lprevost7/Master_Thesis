@@ -150,9 +150,7 @@ int main(int argc, char *argv[])
 
                 std::cout << "Running MOEAD instead of TPLS/PLS for GA..." << std::endl;
                 moead.run();
-                moead.writeParetoFrontToCSV("graph.csv");
-
-                // On peut afficher du temps si tu veux
+                moead.printHypervolume();
                 double time_elapsed = (double)(clock() - time) / CLOCKS_PER_SEC;
                 std::cout << "time : " << time_elapsed << std::endl;
                 std::cout << "iteration counter : " << emili::iteration_counter() << std::endl;
