@@ -1,61 +1,125 @@
-## Parameter description file for irace to tune PFSP algorithms (positional grammar).
+## Parameter description file for irace to tune PFSP algorithms (named parameters).
 
-# Top-level algorithm choice (positional token passed through)
-algorithm        "--algorithm "      c      ("ch6","ris","tabu","vnd","gvns","ils")
+# Top-level algorithm choice
+algorithm        "--algorithm "      c      ("ch6","ris","tabu","vnd","vns","ils")
 
-# Shared initial solutions (used by most algos)
-initial_solution ""                  c      ("random","irandom","slack","lit","rz","nrz","nrz2","nrz2ff","srz","lr","lrnm","nlr","mneh","rmneh","nwslack","frb5","csfrb5","gfrb5","bs","bs2","bs2n","bsnn","bs2nf","ff","ffn","bscho","bschr","bsch") | algorithm %in% c("ch6","ris","tabu","vnd","gvns","ils")
-initial_irandom_k ""                 i      (1, 50)        | initial_solution == "irandom"
-initial_lr_size ""                   i      (1, 200)       | initial_solution == "lr"
-initial_nlr_size ""                  i      (1, 200)       | initial_solution == "nlr"
+# -------------------------
+# Initial solutions
+# -------------------------
+# NOTE: keep as you had (these tokens are handled elsewhere in your codebase),
+# and they are used by the runner as positional tokens.
+initial_solution "--initial_solution " c ("random","irandom","slack","lit","rz","nrz","nrz2","nrz2ff","srz","lr","lrnm","nlr","mneh","rmneh","nwslack","frb5","csfrb5","gfrb5","bs","bs2","bs2n","bsnn","bs2nf","ff","ffn","bscho","bschr","bsch") | algorithm %in% c("ch6","ris","tabu","vnd","vns","ils")
 
-# Search mode for algorithms that need it
-ls_mode         ""                  c      ("first","best") | algorithm %in% c("tabu","vnd","ils")
+# numeric parameters used only when the chosen initial solution requires them
+irandom_k "--irandom_k "  i (1, 50)   | initial_solution == "irandom"
+lr_size   "--lr_size "    i (1, 200)  | initial_solution == "lr"
+nlr_size  "--nlr_size "   i (1, 200)  | initial_solution == "nlr"
+ff_a "--ff_a " r (0.001, 10.0) | initial_solution %in% c("ff","ffn")
+ff_b "--ff_b " r (0.001, 10.0) | initial_solution %in% c("ff","ffn")
+ff_k "--ff_k " i (1, 500)      | initial_solution == "ff"
+bschr_a "--bschr_a " r (0.001, 100.0) | initial_solution == "bschr"
+bschr_b "--bschr_b " r (0.001, 100.0) | initial_solution == "bschr"
+bschr_c "--bschr_c " r (0.001, 100.0) | initial_solution == "bschr"
+bschr_d "--bschr_d " r (0.001, 100.0) | initial_solution == "bschr"
+bs2_a "--bs2_a " r (0.001, 100.0) | initial_solution == "bs2"
+bs2_b "--bs2_b " r (0.001, 100.0) | initial_solution == "bs2"
+bs2_c "--bs2_c " r (0.001, 100.0) | initial_solution == "bs2"
+bs2_e "--bs2_e " r (0.001, 100.0) | initial_solution == "bs2"
+bs2_gamma "--bs2_gamma " i (1, 500) | initial_solution == "bs2"
+bs2n_a "--bs2n_a " r (0.001, 100.0) | initial_solution == "bs2n"
+bs2n_b "--bs2n_b " r (0.001, 100.0) | initial_solution == "bs2n"
+bs2n_c "--bs2n_c " r (0.001, 100.0) | initial_solution == "bs2n"
+bs2n_e "--bs2n_e " r (0.001, 100.0) | initial_solution == "bs2n"
+bs2n_frac "--bs2n_frac " r (0.0, 1.0) | initial_solution == "bs2n"
+bsnn_a "--bsnn_a " r (0.001, 100.0) | initial_solution == "bsnn"
+bsnn_b "--bsnn_b " r (0.001, 100.0) | initial_solution == "bsnn"
+bsnn_c "--bsnn_c " r (0.001, 100.0) | initial_solution == "bsnn"
+bsnn_e "--bsnn_e " r (0.001, 100.0) | initial_solution == "bsnn"
 
-# Termination (token + optional value)
-termination      ""                 c      ("true","locmin","time","iteration","maxstep","msnoimprov","soater") | algorithm %in% c("ch6","tabu","vnd","ils")
-time_value       ""                 r      (0.1, 60.0)    | termination == "time"
-iteration_value  ""                 i      (1, 20000)     | termination == "iteration"
-maxstep_value    ""                 i      (1, 20000)     | termination == "maxstep"
-msnoimprov_value ""                 i      (0, 10000)     | termination == "msnoimprov"
-soater_value     ""                 r      (0.001, 20.0)  | termination == "soater"
+# -------------------------
+# Search mode for algos that need it
+# -------------------------
+ls_mode "--ls_mode " c ("first","best") | algorithm %in% c("tabu","vnd","ils","vns")
+vns_ls_mode "--vns_ls_mode " c ("first","best") | algorithm == "vns"
 
+# -------------------------
+# Termination
+# Parser-supported tokens: true, locmin, time <r>, timero <r>, maxstep <i>, msorlocmin <i>, msnoimp <i>
+# -------------------------
+termination "--termination " c ("true","locmin","time","timero","maxstep","msorlocmin","msnoimp") | algorithm %in% c("ch6","tabu","vnd","vns","ils")
+
+time_value      "--time_value "      r (0.1, 60.0)   | termination %in% c("time","timero")
+maxstep_value   "--maxstep_value "   i (1, 20000)    | termination == "maxstep"
+msorlocmin_value "--msorlocmin_value " i (1, 20000)  | termination == "msorlocmin"
+msnoimp_value   "--msnoimp_value "   i (0, 10000)    | termination == "msnoimp"
+
+# -------------------------
 # Neighborhoods (positional)
-neigh1          ""                  c      ("insert","binsert","finsert","tinsert","transpose","xtranspose","exchange","adpinsert","karnghb","csinsert","atxexchange","hatxexchange","eatxexchange","oexchange","txinsert","atxinsert","oinsert","hataxinsert","natxinsert","natx2insert","thatxinsert","fatxinsert","patxinsert","satxinsert","eatxinsert","tatxinsert","ntctinsert","nrztctinsert","nttinsert","tainsert","fstainsert","cstainsert","ntainsert","nwinsert","nwtinsert","nwexchange","nwtranspose","sdsttainsert","sdstcsinsert") | algorithm %in% c("ch6","tabu","vnd","ils")
-neigh2          ""                  c      ("insert","binsert","finsert","tinsert","transpose","xtranspose","exchange","adpinsert","karnghb","csinsert","atxexchange","hatxexchange","eatxexchange","oexchange","txinsert","atxinsert","oinsert","hataxinsert","natxinsert","natx2insert","thatxinsert","fatxinsert","patxinsert","satxinsert","eatxinsert","tatxinsert","ntctinsert","nrztctinsert","nttinsert","tainsert","fstainsert","cstainsert","ntainsert","nwinsert","nwtinsert","nwexchange","nwtranspose","sdsttainsert","sdstcsinsert","none") | algorithm == "vnd"
-neigh3          ""                  c      ("insert","binsert","finsert","tinsert","transpose","xtranspose","exchange","adpinsert","karnghb","csinsert","atxexchange","hatxexchange","eatxexchange","oexchange","txinsert","atxinsert","oinsert","hataxinsert","natxinsert","natx2insert","thatxinsert","fatxinsert","patxinsert","satxinsert","eatxinsert","tatxinsert","ntctinsert","nrztctinsert","nttinsert","tainsert","fstainsert","cstainsert","ntainsert","nwinsert","nwtinsert","nwexchange","nwtranspose","sdsttainsert","sdstcsinsert","none") | algorithm == "vnd"
+# -------------------------
+neigh1 "--neigh1 " c ("insert","binsert","finsert","tinsert","transpose","xtranspose","exchange","adpinsert","karnghb","csinsert","atxexchange","hatxexchange","eatxexchange","oexchange","txinsert","atxinsert","oinsert","natxinsert","natx2insert","thatxinsert","fatxinsert","patxinsert","satxinsert","eatxinsert","tatxinsert","ntctinsert","nrztctinsert","nttinsert","tainsert","fstainsert","cstainsert","ntainsert","nwinsert","nwtinsert","nwexchange","nwtranspose","sdsttainsert","sdstcsinsert") | algorithm %in% c("ch6","tabu","vnd","vns","ils")
 
+neigh2 "--neigh2 " c ("insert","binsert","finsert","tinsert","transpose","xtranspose","exchange","adpinsert","karnghb","csinsert","atxexchange","hatxexchange","eatxexchange","oexchange","txinsert","atxinsert","oinsert","natxinsert","natx2insert","thatxinsert","fatxinsert","patxinsert","satxinsert","eatxinsert","tatxinsert","ntctinsert","nrztctinsert","nttinsert","tainsert","fstainsert","cstainsert","ntainsert","nwinsert","nwtinsert","nwexchange","nwtranspose","sdsttainsert","sdstcsinsert","none") | algorithm %in% c("vnd","ch6","vns")
+
+neigh3 "--neigh3 " c ("insert","binsert","finsert","tinsert","transpose","xtranspose","exchange","adpinsert","karnghb","csinsert","atxexchange","hatxexchange","eatxexchange","oexchange","txinsert","atxinsert","oinsert","natxinsert","natx2insert","thatxinsert","fatxinsert","patxinsert","satxinsert","eatxinsert","tatxinsert","ntctinsert","nrztctinsert","nttinsert","tainsert","fstainsert","cstainsert","ntainsert","nwinsert","nwtinsert","nwexchange","nwtranspose","sdsttainsert","sdstcsinsert","none") | algorithm == "vnd"
+
+tatx_a "--tatx_a " r (0.001, 10.0) | neigh1 == "tatxinsert"
+tatx_b "--tatx_b " r (0.001, 10.0) | neigh1 == "tatxinsert"
+tatx2_a "--tatx2_a " r (0.001, 10.0) | neigh2 == "tatxinsert"
+tatx2_b "--tatx2_b " r (0.001, 10.0) | neigh2 == "tatxinsert"
+tatx3_a "--tatx3_a " r (0.001, 10.0) | neigh3 == "tatxinsert"
+tatx3_b "--tatx3_b " r (0.001, 10.0) | neigh3 == "tatxinsert"
+
+
+# -------------------------
+# VNS specifics
+# -------------------------
+vns_shake "--vns_shake " c ("pershake","nshake") | algorithm == "vns"
+vns_nshake_k "--vns_nshake_k " i (1, 50) | algorithm == "vns" & vns_shake == "nshake"
+vns_perturbation1 "--vns_perturbation1 " c ("noper","igper","nrzper","tmiigper","nwtmiigper","rndmv","mptlm","restart","restartls","sdstigo","sdstigols","testper") | algorithm == "vns"
+vns_perturbation2 "--vns_perturbation2 " c ("noper","igper","nrzper","tmiigper","nwtmiigper","rndmv","mptlm","restart","restartls","sdstigo","sdstigols","testper","none") | algorithm == "vns"
+vns_p1_moves "--vns_p1_moves " i (1, 50) | algorithm == "vns" & vns_perturbation1 %in% c("igper","noper","nrzper","tmiigper","nwtmiigper")
+vns_p2_moves "--vns_p2_moves " i (1, 50) | algorithm == "vns" & vns_perturbation2 %in% c("igper","noper","nrzper","tmiigper","nwtmiigper")
+vns_p1_rndmv_neigh "--vns_p1_rndmv_neigh " c ("insert","transpose","exchange") | algorithm == "vns" & vns_perturbation1 == "rndmv"
+vns_p1_rndmv_moves "--vns_p1_rndmv_moves " i (1, 50) | algorithm == "vns" & vns_perturbation1 == "rndmv"
+vns_p2_rndmv_neigh "--vns_p2_rndmv_neigh " c ("insert","transpose","exchange") | algorithm == "vns" & vns_perturbation2 == "rndmv"
+vns_p2_rndmv_moves "--vns_p2_rndmv_moves " i (1, 50) | algorithm == "vns" & vns_perturbation2 == "rndmv"
+
+# -------------------------
 # Tabu specifics
-tabu_memory      ""                 c      ("move","move2","hash","solution","tsabm","tsabmt","value") | algorithm == "tabu"
-tabu_memory_size ""                 i      (1, 500)      | algorithm == "tabu" & tabu_memory %in% c("move","move2","hash","solution","tsabm","tsabmt")
+# -------------------------
+tabu_memory "--tabu_memory " c ("move","move2","hash","solution","tsabm","tsabmt","value") | algorithm == "tabu"
+tabu_memory_size "--tabu_memory_size " i (1, 500) | algorithm == "tabu" & tabu_memory %in% c("move","move2","hash","solution","tsabm","tsabmt","value")
 
-# GVNS specifics
-gvns_perturbation1 ""               c      ("igper","testper","rndmv","noper","nrzper","tmiigper","nwtmiigper","mptlm","restart","restartls","sdstigo","sdstigols") | algorithm == "gvns"
-gvns_p1_moves     ""               i      (1, 200)      | gvns_perturbation1 %in% c("igper","noper","nrzper","tmiigper","nwtmiigper")
-gvns_p1_rndmv_neigh ""             c      ("insert","binsert","finsert","tinsert","transpose","xtranspose","exchange","adpinsert","karnghb","csinsert","atxexchange","hatxexchange","eatxexchange","oexchange","txinsert","atxinsert","oinsert","hataxinsert","natxinsert","natx2insert","thatxinsert","fatxinsert","patxinsert","satxinsert","eatxinsert","tatxinsert","ntctinsert","nrztctinsert","nttinsert","tainsert","fstainsert","cstainsert","ntainsert","nwinsert","nwtinsert","nwexchange","nwtranspose","sdsttainsert","sdstcsinsert") | gvns_perturbation1 == "rndmv"
-gvns_p1_rndmv_moves ""            i      (1, 50)       | gvns_perturbation1 == "rndmv"
-gvns_perturbation2 ""              c      ("igper","testper","rndmv","noper","nrzper","tmiigper","nwtmiigper","mptlm","restart","restartls","sdstigo","sdstigols") | algorithm == "gvns"
-gvns_p2_moves     ""               i      (1, 200)      | gvns_perturbation2 %in% c("igper","noper","nrzper","tmiigper","nwtmiigper")
-gvns_p2_rndmv_neigh ""             c      ("insert","binsert","finsert","tinsert","transpose","xtranspose","exchange","adpinsert","karnghb","csinsert","atxexchange","hatxexchange","eatxexchange","oexchange","txinsert","atxinsert","oinsert","hataxinsert","natxinsert","natx2insert","thatxinsert","fatxinsert","patxinsert","satxinsert","eatxinsert","tatxinsert","ntctinsert","nrztctinsert","nttinsert","tainsert","fstainsert","cstainsert","ntainsert","nwinsert","nwtinsert","nwexchange","nwtranspose","sdsttainsert","sdstcsinsert") | gvns_perturbation2 == "rndmv"
-gvns_p2_rndmv_moves ""            i      (1, 50)       | gvns_perturbation2 == "rndmv"
-gvns_time          ""              r      (0.1, 120.0)  | algorithm == "gvns"
+# -------------------------
+# ILS acceptance (parser-supported)
+# acceptance tokens: metropolis, always, improve, sa_metropolis, pmetro, saacc, implat, explore, prob
+# -------------------------
+acceptance "--acceptance " c ("metropolis","always","improve","sa_metropolis","pmetro","saacc","implat","explore","prob") |algorithm == "ils"
 
-# ILS specifics (outer termination reuses termination above)
-ils_perturbation ""                c      ("igper","testper","rndmv","noper","nrzper","tmiigper","nwtmiigper","mptlm","restart","restartls","sdstigo","sdstigols") | algorithm == "ils"
-ils_per_moves    ""                i      (1, 200)      | ils_perturbation %in% c("igper","noper","nrzper","tmiigper","nwtmiigper")
-ils_per_rndmv_neigh ""            c      ("insert","binsert","finsert","tinsert","transpose","xtranspose","exchange","adpinsert","karnghb","csinsert","atxexchange","hatxexchange","eatxexchange","oexchange","txinsert","atxinsert","oinsert","hataxinsert","natxinsert","natx2insert","thatxinsert","fatxinsert","patxinsert","satxinsert","eatxinsert","tatxinsert","ntctinsert","nrztctinsert","nttinsert","tainsert","fstainsert","cstainsert","ntainsert","nwinsert","nwtinsert","nwexchange","nwtranspose","sdsttainsert","sdstcsinsert") | ils_perturbation == "rndmv"
-ils_per_rndmv_moves ""           i      (1, 50)       | ils_perturbation == "rndmv"
+# metropolis: 1 decimal
+acc_temp "--acc_temp " r (0.001, 200.0) | acceptance == "metropolis"
 
-# Acceptance (ILS)
-acceptance       ""                c      ("soaacc","testacc","metropolis","always","improve","sa_metropolis","pmetro","saacc","tmiigacc","implat") | algorithm == "ils"
-acc_p1           ""                r      (0.001, 200.0) | acceptance %in% c("soaacc","metropolis","sa_metropolis","pmetro","saacc","tmiigacc")
-acc_p2           ""                r      (0.001, 200.0) | acceptance %in% c("sa_metropolis","pmetro","saacc")
-acc_ratio        ""                r      (0.001, 1.0)   | acceptance %in% c("sa_metropolis","pmetro","saacc")
-acc_freq         ""                i      (1, 2000)      | acceptance %in% c("pmetro","saacc")
-acc_always_mode  ""                c      ("intensify","diversify") | acceptance == "always"
-acc_test_swaps   ""                i      (0, 5000)      | acceptance == "testacc"
-acc_implat_nonimp ""               i      (0, 5000)      | acceptance == "implat"
-acc_implat_plateau ""              r      (0.0, 200.0)   | acceptance == "implat"
+# always: requires intensify|diversify
+acc_always_mode "--acc_always_mode " c ("intensify","diversify") | acceptance == "always"
+
+# sa_metropolis: start end ratio
+acc_start "--acc_start " r (0.001, 200.0) | acceptance %in% c("sa_metropolis","pmetro","saacc")
+acc_end   "--acc_end "   r (0.001, 200.0) | acceptance %in% c("sa_metropolis","pmetro","saacc")
+acc_ratio "--acc_ratio " r (0.001, 1.0)   | acceptance %in% c("sa_metropolis","pmetro","saacc")
+
+# pmetro: start end ratio iterations
+acc_iter "--acc_iter " i (1, 2000) | acceptance == "pmetro"
+
+# saacc: start end ratio iterations alpha
+acc_sa_iter "--acc_sa_iter " i (1, 2000) | acceptance == "saacc"
+acc_alpha "--acc_alpha " r (0.0, 1.0) | acceptance == "saacc"
+
+# implat: nonImprovingSteps plateauValue
+implat_nonimp "--implat_nonimp " i (0, 5000) | acceptance == "implat"
+implat_plateau "--implat_plateau " r (0.0, 200.0) | acceptance == "implat"
+
+# prob: one decimal
+acc_prob "--acc_prob " r (0.0, 1.0) | acceptance == "prob"
 
 [global]
 digits = 4

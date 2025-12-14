@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ==============================
-# Arguments IRACE
+# IRACE arguments
 # ==============================
 ID_CONFIG=$1
 ID_INSTANCE=$2
@@ -11,7 +11,7 @@ INSTANCE=$4
 shift 4
 
 # ==============================
-# Paramètres positionnels (ordre = parameters_ga_moead_multi.txt)
+# Positional parameters (order = parameters_ga_moead_multi.txt)
 # ==============================
 popSize=$1
 cr=$2
@@ -30,10 +30,10 @@ maxstep_value=${14}
 msnoimprov_value=${15}
 soater_value=${16}
 karter_value=${17}
-it_param=${18}
+it_param=${18:-1}
 
 # ==============================
-# INITIAL
+# Initial solution configuration
 # ==============================
 if [[ "$initial" == "lr" ]]; then
     init_cmd="lr $lr_size"
@@ -46,7 +46,7 @@ else
 fi
 
 # ==============================
-# TERMINATION
+# Termination condition mapping
 # ==============================
 case "$termination" in
     true|locmin)
@@ -77,7 +77,7 @@ case "$termination" in
 esac
 
 # ==============================
-# GA / MEMETIC
+# GA vs Memetic mode
 # ==============================
 memetic_flag=""
 if [[ "$ga_mode" == "memetic" ]]; then
@@ -88,7 +88,7 @@ if [[ "$ga_mode" == "memetic" ]]; then
 fi
 
 # ==============================
-# Construction de la commande EMILI
+# Build EMILI command
 # ==============================
 CMD=(../../../build/emili "$INSTANCE" PFSP_PLS PFSP_MS PFSP_TCT \
      ga "$popSize" "$cr" "$mr")
@@ -99,14 +99,14 @@ fi
 
 CMD+=("$init_cmd")
 
-# term_cmd peut contenir 1 ou 2 mots
+# term_cmd may contain one or two tokens
 for t in $term_cmd; do
     CMD+=("$t")
 done
 
 CMD+=(ga_tournament "$k" ga_ox ga_swapmut)
 
-# IMPORTANT : on remet -step 10 (fixe) + -it tuné
+# IMPORTANT: keep fixed -step 10 and tuned -it
 CMD+=(-step 10 -it "$it_param")
 
 if [[ -n "$memetic_flag" ]]; then
@@ -114,14 +114,19 @@ if [[ -n "$memetic_flag" ]]; then
 fi
 
 # ==============================
-# Exécution
+# Execution
 # ==============================
+# RUN_TAG and STDOUT/STDERR are kept here for reference if you want file capture
+# RUN_TAG="c${ID_CONFIG}-${ID_INSTANCE}-${SEED}"
+# STDOUT="${RUN_TAG}.stdout"
+# STDERR="${RUN_TAG}.stderr"
+
+# Capture both stdout and stderr so HV and errors are visible
 OUTPUT=$("${CMD[@]}" 2>&1)
 
-# Debug optionnel : sauver la dernière commande et la sortie
+# Optional debug: save the last command and full output
 echo "${CMD[@]}" > last_cmd_moead.txt
 echo "$OUTPUT" > last_output_moead.txt
-
 
 hv=$(echo "$OUTPUT" | grep "HV" | awk '{print $2}' | tail -n 1)
 
@@ -134,3 +139,6 @@ else
 fi
 
 echo "$cost"
+
+# Exit cleanly
+exit 0

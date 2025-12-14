@@ -52,16 +52,29 @@ fi
 # exec $EXE ${EXE_PARAMS}
 # exit 1
 
-# Parse key/value pairs (all switches are empty except --algorithm)
+# Parse key/value pairs coming from irace.
+# IMPORTANT: In parameters.txt, option names are like "--initial_solution".
+# Internally, this script uses keys without the leading "--".
 ALG=""
 declare -A P
+
 set -- ${CONFIG_PARAMS}
 while [ $# -gt 0 ]; do
     case "$1" in
         --algorithm)
-            ALG="$2"; shift 2;;
+            ALG="$2";
+            P[algorithm]="$2";
+            shift 2
+            ;;
+        --*)
+            key="${1#--}"
+            val="$2"
+            P["$key"]="$val"
+            shift 2
+            ;;
         *)
-            key="$1"; val="$2"; P[$key]="$val"; shift 2;;
+            error "Unexpected token from irace: '$1' (expected --key value pairs)"
+            ;;
     esac
 done
 
@@ -73,33 +86,46 @@ fi
 initial_tokens() {
     local init="${P[initial_solution]}"
     case "$init" in
-        lr)   echo "lr ${P[initial_lr_size]}" ;;
-        nlr)  echo "nlr ${P[initial_nlr_size]}" ;;
-        irandom) echo "irandom ${P[initial_irandom_k]}" ;;
-        *)    echo "$init" ;;
+        irandom) echo "irandom ${P[irandom_k]}" ;;
+        lr)      echo "lr ${P[lr_size]}" ;;
+        nlr)     echo "nlr ${P[nlr_size]}" ;;
+        ff)      echo "ff ${P[ff_a]} ${P[ff_b]} ${P[ff_k]}" ;;
+        ffn)     echo "ffn ${P[ff_a]} ${P[ff_b]}" ;;
+        bschr)   echo "bschr ${P[bschr_a]} ${P[bschr_b]} ${P[bschr_c]} ${P[bschr_d]}" ;;
+        bs2)     echo "bs2 ${P[bs2_a]} ${P[bs2_b]} ${P[bs2_c]} ${P[bs2_e]} ${P[bs2_gamma]}" ;;
+        bs2n)    echo "bs2n ${P[bs2n_a]} ${P[bs2n_b]} ${P[bs2n_c]} ${P[bs2n_e]} ${P[bs2n_frac]}" ;;
+        bsnn)    echo "bsnn ${P[bsnn_a]} ${P[bsnn_b]} ${P[bsnn_c]} ${P[bsnn_e]}" ;;
+        *)       echo "$init" ;;
     esac
 }
+
 
 termination_tokens() {
     local t="${P[termination]}"
     case "$t" in
-        time) echo "time ${P[time_value]}" ;;
-        iteration) echo "iteration ${P[iteration_value]}" ;;
-        maxstep) echo "maxstep ${P[maxstep_value]}" ;;
-        msnoimprov) echo "msnoimprov ${P[msnoimprov_value]}" ;;
-        soater) echo "soater ${P[soater_value]}" ;;
-        true|locmin) echo "$t" ;;
-        *) echo "" ;;
+        true|locmin) echo "$t";;
+        time|timero) echo "$t ${P[time_value]}";;
+        maxstep)     echo "maxstep ${P[maxstep_value]}";;
+        msorlocmin)  echo "msorlocmin ${P[msorlocmin_value]}";;
+        msnoimp)     echo "msnoimp ${P[msnoimp_value]}";;
+        *)           echo "";;
     esac
 }
 
+
 perturbation_tokens() {
-    local ptype="$1"; shift
+    # Usage:
+    #   perturbation_tokens <ptype> <moves_key> <rndmv_neigh_key> <rndmv_moves_key>
+    local ptype="$1"
+    local moves_key="$2"
+    local rndmv_neigh_key="$3"
+    local rndmv_moves_key="$4"
+
     case "$ptype" in
         igper|noper|nrzper|tmiigper|nwtmiigper)
-            echo "$ptype ${P[$2]}" ;;
+            echo "$ptype ${P[$moves_key]}" ;;
         rndmv)
-            echo "rndmv ${P[$3]} ${P[$4]}" ;;
+            echo "rndmv ${P[$rndmv_neigh_key]} ${P[$rndmv_moves_key]}" ;;
         mptlm|restart|restartls|sdstigo|sdstigols|testper)
             echo "$ptype" ;;
         *) echo "" ;;
@@ -109,73 +135,160 @@ perturbation_tokens() {
 acceptance_tokens() {
     local atype="${P[acceptance]}"
     case "$atype" in
-        soaacc) echo "soaacc ${P[acc_p1]}" ;;
-        testacc) echo "testacc ${P[acc_test_swaps]}" ;;
-        metropolis) echo "metropolis ${P[acc_p1]}" ;;
-        always) echo "always ${P[acc_always_mode]}" ;;
-        improve) echo "improve" ;;
-        sa_metropolis) echo "sa_metropolis ${P[acc_p1]} ${P[acc_p2]} ${P[acc_ratio]}" ;;
-        pmetro) echo "pmetro ${P[acc_p1]} ${P[acc_p2]} ${P[acc_ratio]} ${P[acc_freq]}" ;;
-        saacc) echo "saacc ${P[acc_p1]} ${P[acc_p2]} ${P[acc_ratio]} ${P[acc_freq]}" ;;
-        tmiigacc) echo "tmiigacc ${P[acc_p1]}" ;;
-        implat) echo "implat ${P[acc_implat_nonimp]} ${P[acc_implat_plateau]}" ;;
-        *) echo "" ;;
+        metropolis)      echo "metropolis ${P[acc_temp]}" ;;
+        always)          echo "always ${P[acc_always_mode]}" ;;
+        improve)         echo "improve" ;;
+        sa_metropolis)   echo "sa_metropolis ${P[acc_start]} ${P[acc_end]} ${P[acc_ratio]}" ;;
+        pmetro)          echo "pmetro ${P[acc_start]} ${P[acc_end]} ${P[acc_ratio]} ${P[acc_iter]}" ;;
+        saacc)           echo "saacc ${P[acc_start]} ${P[acc_end]} ${P[acc_ratio]} ${P[acc_sa_iter]} ${P[acc_alpha]}" ;;
+        implat)          echo "implat ${P[implat_nonimp]} ${P[implat_plateau]}" ;;
+        prob)            echo "prob ${P[acc_prob]}" ;;
+        explore)         echo "explore" ;;
+        *)               echo "" ;;
     esac
 }
 
-neigh_token() {
-    local n="$1"; if [ "$n" != "none" ] && [ -n "$n" ]; then echo "$n"; fi
+neigh_tokens() {
+    local n="$1"
+
+    case "$n" in
+        none|"")
+            echo ""
+            ;;
+        tatxinsert)
+            echo "tatxinsert ${P[tatx_a]} ${P[tatx_b]}"
+            ;;
+        *)
+            # Default: atomic neighborhood
+            echo "$n"
+            ;;
+    esac
 }
+
+ils_pert_tokens() {
+    local p="${P[ils_perturbation]}"
+    case "$p" in
+        ""|noper)
+            echo "noper"
+            ;;
+        rndmv)
+            echo "rndmv ${P[ils_per_rndmv_neigh]} ${P[ils_per_rndmv_moves]}"
+            ;;
+        *)
+            # safe fallback
+            echo "noper"
+            ;;
+    esac
+}
+
 
 # Build command per algorithm ------------------------------------------
 CMD=("${EXE}" "${INSTANCE}" "${PROBLEM}")
+
+# Utility to append a space-separated token string as real argv entries
+append_tokens() {
+    local s="$1"
+    [ -z "$s" ] && return 0
+    local -a toks
+    # shellcheck disable=SC2206
+    toks=($s)
+    CMD+=("${toks[@]}")
+}
+
 case "$ALG" in
     ch6)
-        CMD+=("ch6" "$(initial_tokens)" $(termination_tokens) "${P[neigh1]}" "${P[neigh1b]:-${P[ch6_neigh2]:-${P[neigh2]}}}")
+        CMD+=("ch6")
+        append_tokens "$(initial_tokens)"
+        append_tokens "$(termination_tokens)"
+        append_tokens "$(neigh_tokens "${P[neigh1]}")"
+        append_tokens "$(neigh_tokens "${P[neigh2]}")"
         ;;
     ris)
-        CMD+=("ris" "$(initial_tokens)")
+        CMD+=("ris")
+        append_tokens "$(initial_tokens)"
         ;;
     tabu)
-        CMD+=("tabu" "${P[ls_mode]}" "$(initial_tokens)" $(termination_tokens) "${P[neigh1]}" "${P[tabu_memory]}")
+        CMD+=("tabu" "${P[ls_mode]}")
+        append_tokens "$(initial_tokens)"
+        append_tokens "$(termination_tokens)"
+        append_tokens "$(neigh_tokens "${P[neigh1]}")"
+        CMD+=("${P[tabu_memory]}")
         if [ -n "${P[tabu_memory_size]}" ]; then CMD+=("${P[tabu_memory_size]}"); fi
         ;;
     vnd)
-        CMD+=("vnd" "${P[ls_mode]}" "$(initial_tokens)" $(termination_tokens))
-        n1=$(neigh_token "${P[neigh1]}"); n2=$(neigh_token "${P[neigh2]}"); n3=$(neigh_token "${P[neigh3]}")
+        CMD+=("vnd" "${P[ls_mode]}")
+        append_tokens "$(initial_tokens)"
+        append_tokens "$(termination_tokens)"
+        append_tokens "$(neigh_tokens "${P[neigh1]}")"
+        append_tokens "$(neigh_tokens "${P[neigh2]}")"
+        append_tokens "$(neigh_tokens "${P[neigh3]}")"
         [ -n "$n1" ] && CMD+=("$n1")
         [ -n "$n2" ] && CMD+=("$n2")
         [ -n "$n3" ] && CMD+=("$n3")
         ;;
-    gvns)
-        p1=$(perturbation_tokens "${P[gvns_perturbation1]}" "gvns_p1_moves" "gvns_p1_rndmv_neigh" "gvns_p1_rndmv_moves")
-        p2=$(perturbation_tokens "${P[gvns_perturbation2]}" "gvns_p2_moves" "gvns_p2_rndmv_neigh" "gvns_p2_rndmv_moves")
-        CMD+=("gvns" "$(initial_tokens)")
-        [ -n "$p1" ] && CMD+=($p1)
-        [ -n "$p2" ] && CMD+=($p2)
-        CMD+=("-it" "${P[gvns_time]:-10}")
+    vns)
+        # VNS expects: vns <algorithm> <termination> <shake> <neigh_change>
+        ls_token="${P[vns_ls_mode]:-first}"
+        p1=$(perturbation_tokens "${P[vns_perturbation1]}" "vns_p1_moves" "vns_p1_rndmv_neigh" "vns_p1_rndmv_moves")
+        p2=$(perturbation_tokens "${P[vns_perturbation2]}" "vns_p2_moves" "vns_p2_rndmv_neigh" "vns_p2_rndmv_moves")
+
+        # Build shake component
+        shake_tok="pershake"
+        shake_payload=()
+        if [ "${P[vns_shake]}" = "nshake" ]; then
+            shake_tok="nshake"
+            # use provided neighborhoods (fallback to neigh1/neigh2) and a max size
+            shake_payload+=("${P[neigh1]}")
+            [ -n "${P[neigh2]}" ] && shake_payload+=("${P[neigh2]}")
+            shake_payload+=("${P[vns_nshake_k]:-1}")
+        else
+            # pershake with up to two perturbations
+            [ -n "$p1" ] && shake_payload+=($p1)
+            [ -n "$p2" ] && shake_payload+=($p2)
+            # default safe perturbation if none provided
+            if [ ${#shake_payload[@]} -eq 0 ]; then
+                shake_payload+=("noper")
+            fi
+        fi
+
+        CMD+=("vns" "$ls_token")
+        append_tokens "$(termination_tokens)"
+        CMD+=("$shake_tok")
+        CMD+=("${shake_payload[@]}")
+        CMD+=("accng")
         ;;
     ils)
-        # Local search part: mode, initial, inner termination, neighborhood
-        CMD+=("ils" "${P[ls_mode]}" "$(initial_tokens)" $(termination_tokens) "${P[neigh1]}")
-        # Outer termination (reuse same termination tokens)
-        CMD+=($(termination_tokens))
-        # Perturbation
-        per=$(perturbation_tokens "${P[ils_perturbation]}" "ils_per_moves" "ils_per_rndmv_neigh" "ils_per_rndmv_moves")
-        [ -n "$per" ] && CMD+=($per)
-        # Acceptance
-        acc=$(acceptance_tokens)
-        [ -n "$acc" ] && CMD+=($acc)
+        # ils <(first|best ...)> <outer_term> <perturbation> <acceptance>
+
+        # Inner local search algorithm spec:
+        # (first|best) <initial> <inner_term> <neighborhood>
+        CMD+=("ils" "${P[ls_mode]}")
+        append_tokens "$(initial_tokens)"
+        append_tokens "$(termination_tokens)"
+        append_tokens "$(neigh_tokens "${P[neigh1]}")"
+
+        # Outer termination
+        append_tokens "$(termination_tokens)"
+
+        # Perturbation: must never be empty
+        append_tokens "$(ils_pert_tokens)"
+
+        # Acceptance: must never be empty either (put a safe fallback in acceptance_tokens if needed)
+        append_tokens "$(acceptance_tokens)"
         ;;
+
     *)
         error "unsupported algorithm ${ALG}"
         ;;
 esac
 
 # Uncomment to debug command lines
-# echo "Running: ${CMD[*]}" >&2
+#echo "Running: ${CMD[*]}" >&2
 
-"${CMD[@]}" 1>"${STDOUT}" 2>"${STDERR}" || error "solver failed"
+# Print the command line to stdout file
+echo "Running: ${CMD[*]}" >> "${STDOUT}"
+
+"${CMD[@]}" 1>>"${STDOUT}" 2>"${STDERR}" || error "solver failed"
 
 if [ ! -s "${STDOUT}" ]; then
     error "${STDOUT}: No such file or directory"

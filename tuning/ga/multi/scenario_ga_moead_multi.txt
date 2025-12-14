@@ -1,16 +1,10 @@
 parameterFile     = "parameters_ga_moead_multi.txt"
 trainInstancesFile = "../../instances-list-test.txt"
-configurationsFile    = "configurations_ga_moead_multi.txt"
+#configurationsFile    = "configurations_ga_moead_multi.txt"
 
 targetRunner      = "./target-runner-ga-moead-multi"
 
-maxExperiments    = 48
+maxExperiments    = 2000
 logFile           = "irace-ga-moead-multi.log"
 debugLevel        = 1
-parallel          = 12
-sampleInstances    = FALSE
-elitist            = FALSE
-firstTest          = 2
-mu                 = 3
-nbIterations       = 2
-minNbSurvival      = 2
+parallel          = 4

@@ -1,5 +1,5 @@
 # Population size
-popSize   ""  i   (20, 100)
+popSize   ""  i   (20, 1000)
 
 # Crossover rate
 cr        ""  r   (0.5, 1.0)
@@ -30,11 +30,11 @@ termination "" c (true, locmin, time, iteration, maxstep, msnoimprov, soater, ka
 
 # Conditional numeric parameters:
 time_value       "" r (1, 5)  | termination == "time"
-iteration_value  "" i (1, 10)     | termination == "iteration"
-maxstep_value    "" i (1, 10)     | termination == "maxstep"
-msnoimprov_value "" i (0, 50)      | termination == "msnoimprov"
+iteration_value  "" i (1, 10000)     | termination == "iteration"
+maxstep_value    "" i (1, 10000)     | termination == "maxstep"
+msnoimprov_value "" i (0, 500)      | termination == "msnoimprov"
 soater_value     "" r (0.001, 10.0)  | termination == "soater"
 karter_value     "" r (0.1, 10.0)    | termination == "karter"
 
 # Paramètre spécifique MOEA/D (nombre d'itérations ou generations)
-it     ""  i (1, 3)
+it     ""  i (5, 20)

@@ -1,185 +1,191 @@
 Algorithm,Parameter,ParamType,Token/Options,LogicalInterval/Notes
-ch6,initial_solution,word,INITIAL_*,Initial solution token (lr/nlr/irandom carry an integer)
-ch6,termination,word,TERMINATION_*,true|locmin|time <f>|iteration <i>|maxstep <i>|msnoimprov <i>|soater <f>
-ch6,neighborhood1,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* section below
-ch6,neighborhood2,word,NEIGHBORHOOD_*,See NEIGHBORHOOD_* section below
-ris,initial_solution,word,INITIAL_*,RIS only takes the initial solution (no termination/neighborhood)
-tabu,mode,word,first|best,Tabu move acceptance rule
-tabu,initial_solution,word,INITIAL_*,Initial solution token
-tabu,termination,word,TERMINATION_*,true|locmin|time <f>|iteration <i>|maxstep <i>|msnoimprov <i>|soater <f>
-tabu,neighborhood,word,NEIGHBORHOOD_*,Move neighborhood
-tabu,tabu_memory,word,TABU_MEMORY_*,Tabu memory type
-tabu,tabu_memory_size,number,int,Size for memory types that need it
-vnd,mode,word,first|best,Tie-breaking strategy
-vnd,initial_solution,word,INITIAL_*,Initial solution token
-vnd,termination,word,TERMINATION_*,true|locmin|time <f>|iteration <i>|maxstep <i>|msnoimprov <i>|soater <f>
-vnd,neighborhoods,word,NEIGHBORHOOD_* (2+),Ordered list of neighborhoods (none to skip)
-gvns,initial_solution,word,INITIAL_*,Initial solution token
-gvns,perturbation1,word,PERTURBATION_*,igper <i>|testper|rndmv NEIGH <i>|noper <i>|nrzper <i>|tmiigper <i>|nwtmiigper <i>|mptlm|restart|restartls|sdstigo|sdstigols
-gvns,perturbation2,word,PERTURBATION_*,Same options as perturbation1
-gvns,-it,number,seconds,float>0
-ils,local_search,word,LOCAL_SEARCH_SPEC,first|best <initial> <termination> <neigh>
-ils,termination,word,TERMINATION_*,Outer termination: true|locmin|time <f>|iteration <i>|maxstep <i>|msnoimprov <i>|soater <f>
-ils,perturbation,word,PERTURBATION_*,igper <i>|testper|rndmv NEIGH <i>|noper <i>|nrzper <i>|tmiigper <i>|nwtmiigper <i>|mptlm|restart|restartls|sdstigo|sdstigols
-ils,acceptance,word,ACCEPTANCE_*,soaacc <f>|testacc <i>|metropolis <f>|always intensify|always diversify|improve|sa_metropolis <f> <f> <f>|pmetro <f> <f> <f> <i>|saacc <f> <f> <f> <i>|tmiigacc <f>|implat <i> <f>
-ga,popSize,number,integer,popSize,[2,∞) (practical upper bound depends on memory/time)
-ga,crossoverRate,number,float,crossoverRate,[0.0,1.0]
-ga,mutationRate,number,float,mutationRate,[0.0,1.0]
-ga,initial_solution,word,INITIAL_*,See INITIAL_* tokens
-ga,termination,word,TERMINATION_*,See TERMINATION_* tokens
-ga,selection,word,ga_tournament,Only `ga_tournament` implemented in PFSP builder
-ga,selection.k,number,integer,k,[1,popSize] (practical) or [1,nj]
-ga,crossover,word,ga_ox,Order Crossover (OX)
-ga,mutation,word,ga_swapmut,Swap mutation
-pipe,components,word,LOCAL_SEARCH or other algos,Composed/piped algos take other algorithm specs as parameters
+GLOBAL,problem,word,PFSP_MS (or other problem tokens depending on registered builders),"This file only shows the generic parser core; exact PROBLEM tokens depend on which builders are registered."
+GLOBAL,time_option,word,"-it <float> | -ro <float>","-it is seconds; -ro is multiplied by problemSize. Parsed after algorithm components."
+GLOBAL,seed,word,"rnds <int>","Seed can appear anywhere; parser scans for it."
+GLOBAL,print_solution,word,"ps","Optional flag."
 
-# TERMINATION tokens
-TERMINATION,true,word,true,No-stop termination (no parameter)
-TERMINATION,time,number,time,<float> (seconds),float>0
-TERMINATION,locmin,word,locmin,Stops on local minima (no parameter)
-TERMINATION,soater,number,soater,float>0 (temperature-like; check builder for exact semantics)
-TERMINATION,iteration,number,iteration,<int> >= 1
-TERMINATION,maxstep,number,maxstep,<int> >= 1
-TERMINATION,msnoimprov,number,msnoimprov,<int> >= 0
-TERMINATION,karter,number,UNUSED,Not supported by PFSP parser
+# ---------------------------
+# ALGORITHM (top-level)
+# ---------------------------
+ALGORITHM,algorithm,word,"ils | fils | tabu | first | best | ffirst | fbest | tfirst | tbest | als | vnd | vns | lsvnd | stin | nols | lspipe | ga","These are the tokens explicitly recognized in buildAlgo()."
 
-# INITIAL_SOLUTION tokens (each is a word token unless noted)
-INITIAL,random,word,random,Random constructive
-INITIAL,irandom,word,irandom,Iterated random (has integer param in builder) 
-INITIAL,slack,word,slack,
-INITIAL,lit,word,lit,
-INITIAL,rz,word,rz,
-INITIAL,nrz,word,nrz,
-INITIAL,nrz2,word,nrz2,
-INITIAL,nrz2ff,word,nrz2ff,
-INITIAL,srz,word,srz,
-INITIAL,lr,number,lr size,int in [1,nj]
-INITIAL,lrnm,word,lrnm,
-INITIAL,nlr,number,nlr size,int in [1,nj]
-INITIAL,mneh,word,mneh,
-INITIAL,rmneh,word,rmneh,
-INITIAL,nwslack,word,nwslack,
-INITIAL,frb5,word,frb5,
-INITIAL,csfrb5,word,csfrb5,
-INITIAL,gfrb5,word,gfrb5,
-INITIAL,bs,word,bs,
-INITIAL,bs2,word,bs2,
-INITIAL,bs2n,word,bs2n,
-INITIAL,bsnn,word,bsnn,
-INITIAL,bs2nf,word,bs2nf,
-INITIAL,ff,word,ff,
-INITIAL,ffn,word,ffn,
-INITIAL,bscho,word,bscho,
-INITIAL,bschr,word,bschr,
-INITIAL,bsch,word,bsch,
+# ---------------------------
+# FIRST / BEST / FEASIBLE / TIE-BREAKING variants
+# Structure: <algo> <initial_solution> <termination> <neighborhood>
+# ---------------------------
+first,initial_solution,component,INITIAL_SOLUTION_SPEC,"See INITIAL_SOLUTION_SPEC row below (not expanded in this file)."
+first,termination,component,TERMINATION_SPEC,"See TERMINATION_SPEC rows."
+first,neighborhood,component,NEIGHBORHOOD_SPEC,"In this file, only 'rch' is implemented as neighborhood."
 
-# NEIGHBORHOOD tokens (each is a word token)
-NEIGHBORHOOD,insert,word,insert,
-NEIGHBORHOOD,binsert,word,binsert,Back-insert
-NEIGHBORHOOD,finsert,word,finsert,Forward-insert
-NEIGHBORHOOD,tinsert,word,tinsert,Two-insert
-NEIGHBORHOOD,transpose,word,transpose,
-NEIGHBORHOOD,xtranspose,word,xtranspose,Extended transpose
-NEIGHBORHOOD,exchange,word,exchange,Swap/exchange
-NEIGHBORHOOD,adpinsert,word,adpinsert,Adaptive insert
-NEIGHBORHOOD,karnghb,word,karnghb,Karnighb
-NEIGHBORHOOD,csinsert,word,csinsert,Custom insert
-NEIGHBORHOOD,atxexchange,word,atxexchange,Objective-weighted exchange
-NEIGHBORHOOD,hatxexchange,word,hatxexchange,
-NEIGHBORHOOD,eatxexchange,word,eatxexchange,
-NEIGHBORHOOD,oexchange,word,oexchange,Optimized exchange
-NEIGHBORHOOD,txinsert,word,txinsert,
-NEIGHBORHOOD,atxinsert,word,atxinsert,
-NEIGHBORHOOD,oinsert,word,oinsert,
-NEIGHBORHOOD,hataxinsert,word,hatxinsert,
-NEIGHBORHOOD,natxinsert,word,natxinsert,
-NEIGHBORHOOD,natx2insert,word,natx2insert,
-NEIGHBORHOOD,thatxinsert,word,thatxinsert,
-NEIGHBORHOOD,fatxinsert,word,fatxinsert,
-NEIGHBORHOOD,patxinsert,word,patxinsert,
-NEIGHBORHOOD,satxinsert,word,satxinsert,
-NEIGHBORHOOD,eatxinsert,word,eatxinsert,
-NEIGHBORHOOD,tatxinsert,word,tatxinsert,
-NEIGHBORHOOD,ntctinsert,word,ntctinsert,Total completion time-specific
-NEIGHBORHOOD,nrztctinsert,word,nrztctinsert,
-NEIGHBORHOOD,nttinsert,word,nttinsert,Total tardiness-specific
-NEIGHBORHOOD,tainsert,word,tainsert,Makespan-related
-NEIGHBORHOOD,fstainsert,word,fstainsert,
-NEIGHBORHOOD,cstainsert,word,cstainsert,
-NEIGHBORHOOD,ntainsert,word,ntainsert,No-idle makespan
-NEIGHBORHOOD,nwinsert,word,nwinsert,No-wait insert
-NEIGHBORHOOD,nwtinsert,word,nwtinsert,No-wait two-insert
-NEIGHBORHOOD,nwexchange,word,nwexchange,No-wait exchange
-NEIGHBORHOOD,nwtranspose,word,nwtranspose,No-wait transpose
-NEIGHBORHOOD,sdsttainsert,word,sdsttainsert,Seq-dep setup times
-NEIGHBORHOOD,sdstcsinsert,word,sdstcsinsert,
+best,initial_solution,component,INITIAL_SOLUTION_SPEC,"Same structure as first."
+best,termination,component,TERMINATION_SPEC,"Same structure as first."
+best,neighborhood,component,NEIGHBORHOOD_SPEC,"Same structure as first."
 
-# PERTURBATION tokens
-PERTURBATION,igper,number,igper n,int in [1,nj-1] (builder clamps to <= nj-1)
-PERTURBATION,testper,word,testper,
-PERTURBATION,rndmv,composite,rndmv NEIGHBORHOOD #moves,int moves in [1,nj]
-PERTURBATION,noper,number,noper int,>=1
-PERTURBATION,nrzper,number,nrzper int,>=1
-PERTURBATION,tmiigper,number,tmiigper int,>=1
-PERTURBATION,nwtmiigper,number,nwtmiigper int,>=1
-PERTURBATION,igls,composite,igls (int) LOCAL_SEARCH,int >=1
-PERTURBATION,rsls,composite,rsls (int) LOCAL_SEARCH,int >=1
-PERTURBATION,mptlm,word,mptlm,
-PERTURBATION,restart,word,restart,
-PERTURBATION,restartls,word,restartls,
-PERTURBATION,sdstigo,word,sdstigo,SDST-specific perturbation
-PERTURBATION,sdstigols,word,sdstigols,SDST-specific
+ffirst,initial_solution,component,INITIAL_SOLUTION_SPEC,"FeasibleFirstImprovementSearch."
+ffirst,termination,component,TERMINATION_SPEC,""
+ffirst,neighborhood,component,NEIGHBORHOOD_SPEC,""
 
-# ACCEPTANCE tokens
-ACCEPTANCE,soaacc,number,soaacc float,float>0 (temperature-like)
-ACCEPTANCE,testacc,number,testacc #swaps,int >=0
-ACCEPTANCE,metropolis,composite,metropolis start_temp(float),start_temp>0
-ACCEPTANCE,always,word,always intensify|diversify,Choice intensify or diversify
-ACCEPTANCE,improve,word,improve,No params
-ACCEPTANCE,sa_metropolis,composite,sa_metropolis start_temp end_temp ratio,temps>0 ratio in (0,1]
-ACCEPTANCE,pmetro,composite,pmetro start_temp end_temp ratio frequence(int),see builder
-ACCEPTANCE,saacc,composite,saacc start_temp end_temp ratio frequence(int),see builder
-ACCEPTANCE,tmiigacc,number,tmiigacc float,float>0
-ACCEPTANCE,implat,composite,implat num_non_improv plateau_threshold,integers/floats >=0
+fbest,initial_solution,component,INITIAL_SOLUTION_SPEC,"FeasibleBestImprovementSearch."
+fbest,termination,component,TERMINATION_SPEC,""
+fbest,neighborhood,component,NEIGHBORHOOD_SPEC,""
 
-# TABU_MEMORY tokens
-TABU_MEMORY,move,number,move size,int >=1 (practical <= nj or higher)
-TABU_MEMORY,move2,number,move2 size,int >=1
-TABU_MEMORY,hash,number,hash size,int >=1
-TABU_MEMORY,solution,number,solution size,int >=1
-TABU_MEMORY,tsabm,number,tsabm size,int >=1
-TABU_MEMORY,tsabmt,number,tsabmt size,int >=1
-TABU_MEMORY,value,word,value,Value-based memory
+tfirst,initial_solution,component,INITIAL_SOLUTION_SPEC,"TieBrakingFirstImprovementSearch also requires a PROBLEM component."
+tfirst,termination,component,TERMINATION_SPEC,""
+tfirst,neighborhood,component,NEIGHBORHOOD_SPEC,""
+tfirst,problem,component,PROBLEM_SPEC,"Built via COMPONENT_PROBLEM; implementation not shown in this excerpt."
 
-# GA-specific tokens (repeat for clarity)
-GA,ga_tournament,word,ga_tournament k,tournament with parameter k (integer) k in [1,popSize] or [1,nj]
-GA,ga_ox,word,ga_ox,Order Crossover (no numeric param)
-GA,ga_swapmut,word,ga_swapmut,Swap mutation (no numeric param)
+tbest,initial_solution,component,INITIAL_SOLUTION_SPEC,"TieBrakingBestImprovementSearch also requires a PROBLEM component."
+tbest,termination,component,TERMINATION_SPEC,""
+tbest,neighborhood,component,NEIGHBORHOOD_SPEC,""
+tbest,problem,component,PROBLEM_SPEC,"Built via COMPONENT_PROBLEM; implementation not shown in this excerpt."
 
-# CLI flags
-FLAG,-it,number,seconds,float>0 (alternate termination/time limit)
-FLAG,-step,number,step,int >=1 (logging/step size)
-FLAG,-rnds,number,seed,int (any 32-bit seed)
+# ---------------------------
+# TABU
+# Structure: tabu (best|first) <initial_solution> <termination> <neighborhood> <tabu_tenure>
+# ---------------------------
+tabu,mode,word,"best | first","Token comes immediately after 'tabu'."
+tabu,initial_solution,component,INITIAL_SOLUTION_SPEC,""
+tabu,termination,component,TERMINATION_SPEC,""
+tabu,neighborhood,component,NEIGHBORHOOD_SPEC,""
+tabu,tabu_tenure,component,TABU_TENURE_SPEC,"Built via COMPONENT_TABU_TENURE; exact tokens are in buildTabuTenure() (not included in the shown part of this file)."
 
-# Notes
-NOTE, nj,number,nj,Number of jobs in the instance (use in param bounds)
+# ---------------------------
+# VND
+# Structure: vnd (best|first) <initial_solution> <termination> <neighborhood>... [until parser returns EPSILON]
+# ---------------------------
+vnd,mode,word,"best | first","Token comes immediately after 'vnd'."
+vnd,initial_solution,component,INITIAL_SOLUTION_SPEC,""
+vnd,termination,component,TERMINATION_SPEC,""
+vnd,neighborhoods,component,"NEIGHBORHOOD_SPEC (repeated)","Parser reads a vector of neighborhoods until it returns COMPONENT_EMPTY (EPSILON)."
 
-# PARSING_NOTES
-# Token,ExpectedType,ExampleParserError
-PARSING,tatxinsert,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
-PARSING,time,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
-PARSING,soater,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
-PARSING,soaacc,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
-PARSING,-it,decimal,"PARSING ERROR: A DECIMAL NUMBER WAS EXPECTED!"
-PARSING,iteration,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
-PARSING,maxstep,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
-PARSING,msnoimprov,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
-PARSING,igper,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
-PARSING,lr,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
-PARSING,nlr,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
-PARSING,rndmv_moves,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
-PARSING,testacc_swaps,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
-PARSING,-step,integer,"PARSING ERROR: AN INTEGER NUMBER WAS EXPECTED!"
+# ---------------------------
+# ILS / FILS
+# Structure: ils <algorithm> <termination> <perturbation> <acceptance>
+# ---------------------------
+ils,local_search,component,ALGORITHM_SPEC,"This is a nested algorithm specification (e.g. first/best/tabu/vnd/etc)."
+ils,termination,component,TERMINATION_SPEC,"Outer termination."
+ils,perturbation,component,PERTURBATION_SPEC,""
+ils,acceptance,component,ACCEPTANCE_SPEC,""
 
-# Notes: The parser messages above are examples matching the code's parsing expectations (decimal vs integer). Replace token names above with the exact CLI token when invoking the parser.
+fils,local_search,component,ALGORITHM_SPEC,"Same as ILS but FeasibleIteratedLocalSearch."
+fils,termination,component,TERMINATION_SPEC,""
+fils,perturbation,component,PERTURBATION_SPEC,""
+fils,acceptance,component,ACCEPTANCE_SPEC,""
 
+# ---------------------------
+# VNS (token is 'vns' in this parser)
+# Structure: vns <algorithm> <termination> <shake> <neighborhood_change>
+# ---------------------------
+vns,local_search,component,ALGORITHM_SPEC,"Important: the token after 'vns' MUST be an algorithm (first/best/tabu/...)."
+vns,termination,component,TERMINATION_SPEC,""
+vns,shake,component,SHAKE_SPEC,""
+vns,neighborhood_change,component,NEIGHBORHOOD_CHANGE_SPEC,""
+
+# ---------------------------
+# ALS (Alternate LS)
+# Structure: als <initial_solution> <algorithm> <algorithm>
+# ---------------------------
+als,initial_solution,component,INITIAL_SOLUTION_SPEC,""
+als,algo1,component,ALGORITHM_SPEC,""
+als,algo2,component,ALGORITHM_SPEC,""
+
+# ---------------------------
+# LS-VND (token 'lsvnd')
+# Structure: lsvnd <initial_solution> <algorithm> <algorithm> ... (vector)
+# Termination is forced internally to locmin (not user-provided)
+# ---------------------------
+lsvnd,initial_solution,component,INITIAL_SOLUTION_SPEC,""
+lsvnd,local_searches,component,"ALGORITHM_SPEC (repeated)","Treated as neighborhoods; termination is always locmin internally."
+
+# ---------------------------
+# NO LOCAL SEARCH
+# Structure: nols <initial_solution>
+# ---------------------------
+nols,initial_solution,component,INITIAL_SOLUTION_SPEC,""
+
+# ---------------------------
+# PIPE
+# Structure: lspipe <initial_solution> <algorithm> <algorithm> ... (vector)
+# ---------------------------
+lspipe,initial_solution,component,INITIAL_SOLUTION_SPEC,""
+lspipe,components,component,"ALGORITHM_SPEC (repeated)","PipeSearch over multiple local searches."
+
+# ---------------------------
+# GA
+# Structure: ga <int popSize> <float cr> <float mr> [memetic] <initial_solution> <termination> <ga_selection> <ga_crossover> <ga_mutation> [if memetic: <neighborhood>]
+# ---------------------------
+ga,popSize,number,int,">= 1 (parser only checks digits; practical >=2)"
+ga,crossoverRate,number,float,"Decimal token required (at least contains a digit)."
+ga,mutationRate,number,float,"Decimal token required (at least contains a digit)."
+ga,memetic_flag,word,"memetic (optional)","If present, GA also consumes an extra NEIGHBORHOOD component for the improver."
+ga,initial_solution,component,INITIAL_SOLUTION_SPEC,""
+ga,termination,component,TERMINATION_SPEC,""
+ga,selection,component,GA_SELECTION_SPEC,"Built via COMPONENT_GA_SELECTION (not shown here)."
+ga,crossover,component,GA_CROSSOVER_SPEC,"Built via COMPONENT_GA_CROSSOVER (not shown here)."
+ga,mutation,component,GA_MUTATION_SPEC,"Built via COMPONENT_GA_MUTATION (not shown here)."
+ga,memetic_neighborhood,component,NEIGHBORHOOD_SPEC,"Only if 'memetic' appears."
+
+# ---------------------------
+# INITIAL SOLUTION (not defined in this file)
+# ---------------------------
+INITIAL_SOLUTION_SPEC,initial_solution,component,UNKNOWN_IN_THIS_FILE,"GeneralParser expects an initial solution component, but the tokens are defined in other builder files (e.g., PFSP builder), not in generalParser.cpp."
+
+# ---------------------------
+# TERMINATION (implemented in buildTermination)
+# ---------------------------
+TERMINATION_SPEC,true,word,true,"No parameters."
+TERMINATION_SPEC,locmin,word,locmin,"No parameters."
+TERMINATION_SPEC,time,number,"time <float>","If time==0 it is forced to 1."
+TERMINATION_SPEC,timero,number,"timero <float>","Converted internally to time*problemSize; if time==0 forced to 1."
+TERMINATION_SPEC,maxstep,number,"maxstep <int>",""
+TERMINATION_SPEC,msorlocmin,number,"msorlocmin <int>",""
+TERMINATION_SPEC,msnoimp,number,"msnoimp <int>",""
+
+# (Macros exist but are NOT parsed/implemented in buildTermination in this file)
+TERMINATION_SPEC,iteration,word,UNSUPPORTED_IN_BUILDTERMINATION,"Macro exists (TERMINATION_ITERA) but there is no parsing branch for it here."
+TERMINATION_SPEC,soater,word,UNSUPPORTED_IN_BUILDTERMINATION,"Macro exists (TERMINATION_SOA) but there is no parsing branch for it here."
+TERMINATION_SPEC,eval,word,UNSUPPORTED_IN_BUILDTERMINATION,"Macro exists (TERMINATION_EVA) but there is no parsing branch for it here."
+
+# ---------------------------
+# PERTURBATION (implemented in buildPerturbation)
+# ---------------------------
+PERTURBATION_SPEC,rndmv,component,"rndmv <neighborhood> <int>","RandomMovePerturbation."
+PERTURBATION_SPEC,noper,word,noper,"NoPerturbation."
+PERTURBATION_SPEC,vrndmv,component,"vrndmv <int numMoves> <int iterBeforeChange> <neighborhood>...","Then reads a vector of neighborhoods."
+PERTURBATION_SPEC,perset,component,"perset <perturbation> <perturbation> ...","RandomPerturbationSet (vector)."
+PERTURBATION_SPEC,cper,component,"cper <perturbation> <algorithm>","ComplexPerturbation."
+PERTURBATION_SPEC,mrsilsp,component,"mrsilsp <int poolsize> <perturbation>","MRSILSPerturbation."
+
+# (Macros exist but NOT parsed/implemented here)
+PERTURBATION_SPEC,secper,word,UNSUPPORTED_IN_BUILDPERTURBATION,"Macro exists but no parsing branch shown."
+
+# ---------------------------
+# ACCEPTANCE (implemented in buildAcceptance)
+# ---------------------------
+ACCEPTANCE_SPEC,metropolis,number,"metropolis <float>","MetropolisAcceptance(temperature)."
+ACCEPTANCE_SPEC,always,word,"always intensify | always diversify","Must be followed by intensify/diversify."
+ACCEPTANCE_SPEC,improve,word,improve,"ImproveAccept."
+ACCEPTANCE_SPEC,sa_metropolis,number,"sa_metropolis <float start> <float end> <float ratio>","Metropolis(start,end,ratio)."
+ACCEPTANCE_SPEC,pmetro,number,"pmetro <float start> <float end> <float ratio> <int iterations>","Metropolis(start,end,ratio,iterations)."
+ACCEPTANCE_SPEC,saacc,number,"saacc <float start> <float end> <float ratio> <int iterations> <float alpha>","Metropolis(start,end,ratio,iterations,alpha)."
+ACCEPTANCE_SPEC,implat,number,"implat <int plateau_steps> <int threshold>","AcceptPlateau(plateau_steps,threshold)."
+ACCEPTANCE_SPEC,explore,number,"explore <int steps>","AcceptExplore(steps)."
+
+# (Macro exists but NOT parsed/implemented here)
+ACCEPTANCE_SPEC,prob,word,UNSUPPORTED_IN_BUILDACCEPTANCE,"Macro exists (ACCEPTANCE_PROB) but no parsing branch shown."
+
+# ---------------------------
+# SHAKE (implemented in buildShake)
+# ---------------------------
+SHAKE_SPEC,pershake,component,"pershake <perturbation> <perturbation> ...","PerShake takes a vector of perturbations."
+SHAKE_SPEC,nshake,component,"nshake <neighborhood> <neighborhood> ... <int max_size>","NeighborhoodShake: vector of neighborhoods then an int."
+
+# ---------------------------
+# NEIGHBORHOOD CHANGE (implemented in buildNeighborhoodChange)
+# ---------------------------
+NEIGHBORHOOD_CHANGE_SPEC,accng,component,"accng <acceptance>","AccNeighborhoodChange(acceptance)."
+
+# ---------------------------
+# NEIGHBORHOOD (implemented in buildNeighborhood in this file)
+# ---------------------------
+NEIGHBORHOOD_SPEC,rch,component,"rch <initial_solution>","RandomConstructiveHeuristicNeighborhood requires an INITIAL_SOLUTION component."
