@@ -3,8 +3,8 @@ trainInstancesFile = "../../instances-list.txt"
 
 targetRunner = "./target-runner"
 
-maxExperiments = 2000
+maxExperiments = 1008
 
 logFile = "irace.log"
 debugLevel = 0
-parallel = 4
+parallel = 8

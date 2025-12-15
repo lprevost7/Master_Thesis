@@ -91,7 +91,10 @@ initial_tokens() {
         nlr)     echo "nlr ${P[nlr_size]}" ;;
         ff)      echo "ff ${P[ff_a]} ${P[ff_b]} ${P[ff_k]}" ;;
         ffn)     echo "ffn ${P[ff_a]} ${P[ff_b]}" ;;
+        bsch)    echo "bsch ${P[bsch_a]}" ;;
+        bscho)   echo "bscho ${P[bscho_a]} ${P[bscho_b]} ${P[bscho_c]} ${P[bscho_k]}" ;;
         bschr)   echo "bschr ${P[bschr_a]} ${P[bschr_b]} ${P[bschr_c]} ${P[bschr_d]}" ;;
+        bs)      echo "bs ${P[bs_a]} ${P[bs_b]} ${P[bs_c]} ${P[bs_d]} ${P[bs_k1]}" ;;
         bs2)     echo "bs2 ${P[bs2_a]} ${P[bs2_b]} ${P[bs2_c]} ${P[bs2_e]} ${P[bs2_gamma]}" ;;
         bs2n)    echo "bs2n ${P[bs2n_a]} ${P[bs2n_b]} ${P[bs2n_c]} ${P[bs2n_e]} ${P[bs2n_frac]}" ;;
         bsnn)    echo "bsnn ${P[bsnn_a]} ${P[bsnn_b]} ${P[bsnn_c]} ${P[bsnn_e]}" ;;
@@ -142,28 +145,33 @@ acceptance_tokens() {
         pmetro)          echo "pmetro ${P[acc_start]} ${P[acc_end]} ${P[acc_ratio]} ${P[acc_iter]}" ;;
         saacc)           echo "saacc ${P[acc_start]} ${P[acc_end]} ${P[acc_ratio]} ${P[acc_sa_iter]} ${P[acc_alpha]}" ;;
         implat)          echo "implat ${P[implat_nonimp]} ${P[implat_plateau]}" ;;
-        prob)            echo "prob ${P[acc_prob]}" ;;
-        explore)         echo "explore" ;;
+        explore)         echo "explore ${P[acc_explore_steps]}" ;;
         *)               echo "" ;;
     esac
 }
 
 neigh_tokens() {
-    local n="$1"
+    local slot="$1"   # neigh1 | neigh2 | neigh3
+    local n="$2"
 
     case "$n" in
         none|"")
             echo ""
             ;;
         tatxinsert)
-            echo "tatxinsert ${P[tatx_a]} ${P[tatx_b]}"
+            case "$slot" in
+                neigh1) echo "tatxinsert ${P[tatx_a]}" ;;
+                neigh2) echo "tatxinsert ${P[tatx2_a]}" ;;
+                neigh3) echo "tatxinsert ${P[tatx3_a]}" ;;
+                *)      echo "tatxinsert ${P[tatx_a]}" ;;
+            esac
             ;;
         *)
-            # Default: atomic neighborhood
             echo "$n"
             ;;
     esac
 }
+
 
 ils_pert_tokens() {
     local p="${P[ils_perturbation]}"
@@ -180,6 +188,31 @@ ils_pert_tokens() {
             ;;
     esac
 }
+vns_pert_tokens() {
+    # arg: 1 or 2 selects vns perturbation slot
+    local slot="$1"
+    local ptype_key="vns_perturbation${slot}"
+    local rnd_neigh_key="vns_p${slot}_rndmv_neigh"
+    local rnd_moves_key="vns_p${slot}_rndmv_moves"
+
+    local ptype="${P[$ptype_key]}"
+    case "$ptype" in
+        ""|none)
+            echo ""
+            ;;
+        noper)
+            echo "noper"
+            ;;
+        rndmv)
+            echo "rndmv ${P[$rnd_neigh_key]} ${P[$rnd_moves_key]}"
+            ;;
+        *)
+            # unsupported token -> emit nothing (or default noper)
+            echo ""
+            ;;
+    esac
+}
+
 
 
 # Build command per algorithm ------------------------------------------
@@ -200,8 +233,9 @@ case "$ALG" in
         CMD+=("ch6")
         append_tokens "$(initial_tokens)"
         append_tokens "$(termination_tokens)"
-        append_tokens "$(neigh_tokens "${P[neigh1]}")"
-        append_tokens "$(neigh_tokens "${P[neigh2]}")"
+        append_tokens "$(neigh_tokens neigh1 "${P[neigh1]}")"
+        append_tokens "$(neigh_tokens neigh2 "${P[neigh2]}")"
+
         ;;
     ris)
         CMD+=("ris")
@@ -227,36 +261,51 @@ case "$ALG" in
         [ -n "$n3" ] && CMD+=("$n3")
         ;;
     vns)
-        # VNS expects: vns <algorithm> <termination> <shake> <neigh_change>
-        ls_token="${P[vns_ls_mode]:-first}"
-        p1=$(perturbation_tokens "${P[vns_perturbation1]}" "vns_p1_moves" "vns_p1_rndmv_neigh" "vns_p1_rndmv_moves")
-        p2=$(perturbation_tokens "${P[vns_perturbation2]}" "vns_p2_moves" "vns_p2_rndmv_neigh" "vns_p2_rndmv_moves")
+        # VNS expects:
+        # vns <ALGORITHM_SPEC> <TERMINATION_SPEC> <SHAKE_SPEC> <NEIGHBORHOOD_CHANGE_SPEC>
+        # where ALGORITHM_SPEC can be: first|best <initial> <termination> <neighborhood>
 
-        # Build shake component
-        shake_tok="pershake"
-        shake_payload=()
+        CMD+=("vns" "${P[vns_ls_mode]:-${P[ls_mode]:-first}}")
+
+        # ---- inner local search algorithm spec ----
+        append_tokens "$(initial_tokens)"
+        append_tokens "$(termination_tokens)"
+        append_tokens "$(neigh_tokens "${P[neigh1]}")"
+
+        # ---- outer termination ----
+        append_tokens "$(termination_tokens)"
+
+        # ---- shake ----
         if [ "${P[vns_shake]}" = "nshake" ]; then
-            shake_tok="nshake"
-            # use provided neighborhoods (fallback to neigh1/neigh2) and a max size
-            shake_payload+=("${P[neigh1]}")
-            [ -n "${P[neigh2]}" ] && shake_payload+=("${P[neigh2]}")
-            shake_payload+=("${P[vns_nshake_k]:-1}")
+            # nshake <neighborhood>... <Kmax(int)>
+            CMD+=("nshake")
+            append_tokens "$(neigh_tokens "${P[vns_nshake_neigh1]:-${P[neigh1]}}")"
+            if [ -n "${P[vns_nshake_neigh2]}" ] && [ "${P[vns_nshake_neigh2]}" != "none" ]; then
+                append_tokens "$(neigh_tokens "${P[vns_nshake_neigh2]}")"
+            fi
+            CMD+=("${P[vns_nshake_k]}")
         else
-            # pershake with up to two perturbations
-            [ -n "$p1" ] && shake_payload+=($p1)
-            [ -n "$p2" ] && shake_payload+=($p2)
-            # default safe perturbation if none provided
-            if [ ${#shake_payload[@]} -eq 0 ]; then
-                shake_payload+=("noper")
+            # pershake <perturbation> <perturbation> ...
+            CMD+=("pershake")
+            p1="$(vns_pert_tokens 1)"
+            p2="$(vns_pert_tokens 2)"
+            [ -n "$p1" ] && append_tokens "$p1"
+            [ -n "$p2" ] && append_tokens "$p2"
+            # safety: must have at least one perturbation
+            if [ -z "$p1" ] && [ -z "$p2" ]; then
+                CMD+=("noper")
             fi
         fi
 
-        CMD+=("vns" "$ls_token")
-        append_tokens "$(termination_tokens)"
-        CMD+=("$shake_tok")
-        CMD+=("${shake_payload[@]}")
+        # ---- neighborhood change ----
         CMD+=("accng")
+        acc="$(acceptance_tokens)"
+        if [ -z "$acc" ]; then
+        acc="improve"   # safe default (no parameters)
+        fi
+        append_tokens "$acc"
         ;;
+
     ils)
         # ils <(first|best ...)> <outer_term> <perturbation> <acceptance>
 
@@ -288,7 +337,7 @@ esac
 # Print the command line to stdout file
 echo "Running: ${CMD[*]}" >> "${STDOUT}"
 
-"${CMD[@]}" 1>>"${STDOUT}" 2>"${STDERR}" || error "solver failed"
+#"${CMD[@]}" 1>>"${STDOUT}" 2>"${STDERR}" || error "solver failed"
 
 if [ ! -s "${STDOUT}" ]; then
     error "${STDOUT}: No such file or directory"
